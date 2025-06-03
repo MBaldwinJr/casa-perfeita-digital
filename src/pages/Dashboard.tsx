@@ -1,10 +1,22 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Users, FileText, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 
 export default function Dashboard() {
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold">Dashboard</h2>
+          <p className="text-muted-foreground">Visão geral do seu negócio imobiliário</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-muted-foreground">Última atualização</p>
+          <p className="font-semibold">{new Date().toLocaleString('pt-BR')}</p>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -50,6 +62,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <AnalyticsDashboard />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -107,6 +121,13 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium">Cliente cadastrado</p>
                 <p className="text-sm text-muted-foreground">Maria Silva - há 6 horas</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3">
+              <div className="h-2 w-2 bg-purple-500 rounded-full mt-2"></div>
+              <div>
+                <p className="text-sm font-medium">Imóvel adicionado</p>
+                <p className="text-sm text-muted-foreground">Casa Vila Nova - há 8 horas</p>
               </div>
             </div>
           </CardContent>
