@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Calendar, DollarSign, User, Edit, Eye } from "lucide-react";
-import { PropostaForm } from "@/components/forms/PropostaForm";
+import PropostaForm from "@/components/forms/PropostaForm";
 
 export default function Propostas() {
   const [showForm, setShowForm] = useState(false);
@@ -61,7 +60,7 @@ export default function Propostas() {
             <DialogHeader>
               <DialogTitle>Criar Nova Proposta</DialogTitle>
             </DialogHeader>
-            <PropostaForm onClose={() => setShowForm(false)} />
+            <PropostaForm />
           </DialogContent>
         </Dialog>
       </div>
