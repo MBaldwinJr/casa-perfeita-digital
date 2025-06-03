@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Users, Bell, Database, Security, Mail, Smartphone, Globe } from "lucide-react";
+import { Settings, Users, Bell, Database, Shield, Mail, Smartphone, Globe } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 export default function Configuracoes() {
@@ -288,7 +287,7 @@ export default function Configuracoes() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Security className="h-5 w-5 mr-2" />
+                <Shield className="h-5 w-5 mr-2" />
                 Configurações de Segurança
               </CardTitle>
               <CardDescription>Proteja seus dados e controle acessos</CardDescription>
