@@ -1,10 +1,15 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Phone, Mail, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Phone, Mail, FileText, Edit, Eye } from "lucide-react";
+import { ClienteForm } from "@/components/forms/ClienteForm";
 
 export default function Clientes() {
+  const [showForm, setShowForm] = useState(false);
+
   const clientes = [
     {
       id: 1,
@@ -45,10 +50,20 @@ export default function Clientes() {
           <h2 className="text-2xl font-bold">Gestão de Clientes</h2>
           <p className="text-muted-foreground">Gerencie seu cadastro de compradores e interessados</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Cliente
-        </Button>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Cliente
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Cadastrar Novo Cliente</DialogTitle>
+            </DialogHeader>
+            <ClienteForm onClose={() => setShowForm(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6">
@@ -81,9 +96,11 @@ export default function Clientes() {
                 </div>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm">
+                    <Eye className="h-4 w-4 mr-1" />
                     Ver Detalhes
                   </Button>
                   <Button size="sm">
+                    <Edit className="h-4 w-4 mr-1" />
                     Editar
                   </Button>
                 </div>

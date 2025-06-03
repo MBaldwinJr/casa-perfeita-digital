@@ -1,10 +1,15 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Bath, Bed, Car } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, MapPin, Bath, Bed, Car, Edit, Eye } from "lucide-react";
+import { ImovelForm } from "@/components/forms/ImovelForm";
 
 export default function Imoveis() {
+  const [showForm, setShowForm] = useState(false);
+
   const imoveis = [
     {
       id: 1,
@@ -46,10 +51,20 @@ export default function Imoveis() {
           <h2 className="text-2xl font-bold">Gestão de Imóveis</h2>
           <p className="text-muted-foreground">Cadastre e gerencie seu portfólio de imóveis</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Imóvel
-        </Button>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Imóvel
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Cadastrar Novo Imóvel</DialogTitle>
+            </DialogHeader>
+            <ImovelForm onClose={() => setShowForm(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -94,9 +109,11 @@ export default function Imoveis() {
 
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm" className="flex-1">
+                    <Eye className="h-4 w-4 mr-1" />
                     Ver Detalhes
                   </Button>
                   <Button size="sm" className="flex-1">
+                    <Edit className="h-4 w-4 mr-1" />
                     Editar
                   </Button>
                 </div>

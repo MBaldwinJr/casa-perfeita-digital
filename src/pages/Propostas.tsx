@@ -1,10 +1,15 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, DollarSign, User } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Calendar, DollarSign, User, Edit, Eye } from "lucide-react";
+import { PropostaForm } from "@/components/forms/PropostaForm";
 
 export default function Propostas() {
+  const [showForm, setShowForm] = useState(false);
+
   const propostas = [
     {
       id: 1,
@@ -45,10 +50,20 @@ export default function Propostas() {
           <h2 className="text-2xl font-bold">Propostas & Contratos</h2>
           <p className="text-muted-foreground">Gerencie propostas, contratos e documentação</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Proposta
-        </Button>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Proposta
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Criar Nova Proposta</DialogTitle>
+            </DialogHeader>
+            <PropostaForm onClose={() => setShowForm(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6">
@@ -83,6 +98,7 @@ export default function Propostas() {
                 </div>
                 <div className="flex space-x-2 md:col-span-2">
                   <Button variant="outline" size="sm">
+                    <Eye className="h-4 w-4 mr-1" />
                     Ver Detalhes
                   </Button>
                   <Button size="sm">
