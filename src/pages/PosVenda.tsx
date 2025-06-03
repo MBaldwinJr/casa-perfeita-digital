@@ -1,11 +1,15 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { MessageSquare, Receipt, Phone, Mail, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { MessageSquare, Receipt, Phone, Mail, Clock, CheckCircle, AlertTriangle, Plus } from "lucide-react";
+import AtendimentoForm from "@/components/forms/AtendimentoForm";
+import { toast } from "@/hooks/use-toast";
 
 export default function PosVenda() {
+  const [showForm, setShowForm] = useState(false);
+
   const atendimentos = [
     {
       id: 1,
@@ -54,6 +58,34 @@ export default function PosVenda() {
     { periodo: "Novembro 2023", nota: 4.9, respostas: 42 },
   ];
 
+  const gerarRecibos = () => {
+    toast({
+      title: "Recibos gerados!",
+      description: "Os recibos mensais foram gerados com sucesso.",
+    });
+  };
+
+  const enviarPesquisa = () => {
+    toast({
+      title: "Pesquisa enviada!",
+      description: "A pesquisa de satisfação foi enviada aos clientes.",
+    });
+  };
+
+  const ligarCliente = (cliente: string) => {
+    toast({
+      title: "Ligação iniciada",
+      description: `Iniciando ligação para ${cliente}...`,
+    });
+  };
+
+  const enviarEmail = (cliente: string) => {
+    toast({
+      title: "Email enviado",
+      description: `Email enviado para ${cliente} com sucesso.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -61,10 +93,20 @@ export default function PosVenda() {
           <h2 className="text-2xl font-bold">Pós-venda</h2>
           <p className="text-muted-foreground">Suporte ao cliente e acompanhamento</p>
         </div>
-        <Button>
-          <MessageSquare className="h-4 w-4 mr-2" />
-          Novo Atendimento
-        </Button>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Atendimento
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Criar Novo Atendimento</DialogTitle>
+            </DialogHeader>
+            <AtendimentoForm onClose={() => setShowForm(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
@@ -147,11 +189,11 @@ export default function PosVenda() {
                     <span>Abertura: {new Date(atendimento.dataAbertura).toLocaleDateString('pt-BR')}</span>
                   </div>
                   <div className="flex space-x-2">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => ligarCliente(atendimento.cliente)}>
                       <Phone className="h-4 w-4 mr-1" />
                       Ligar
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => enviarEmail(atendimento.cliente)}>
                       <Mail className="h-4 w-4 mr-1" />
                       Email
                     </Button>
@@ -196,7 +238,7 @@ export default function PosVenda() {
                 </div>
               ))}
             </div>
-            <Button className="w-full mt-4">
+            <Button className="w-full mt-4" onClick={gerarRecibos}>
               <Receipt className="h-4 w-4 mr-2" />
               Gerar Novos Recibos
             </Button>
@@ -225,7 +267,7 @@ export default function PosVenda() {
                 </div>
               ))}
             </div>
-            <Button className="w-full mt-4" variant="outline">
+            <Button className="w-full mt-4" variant="outline" onClick={enviarPesquisa}>
               <MessageSquare className="h-4 w-4 mr-2" />
               Enviar Nova Pesquisa
             </Button>
