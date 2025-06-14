@@ -54,8 +54,8 @@ export default function DocumentManager() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [filtros, setFiltros] = useState({
-    status: '',
-    tipo: '',
+    status: 'todos',
+    tipo: 'todos',
     busca: ''
   });
 
@@ -190,8 +190,8 @@ export default function DocumentManager() {
   const documentosFiltrados = documentos.filter(doc => {
     const matchBusca = doc.nome.toLowerCase().includes(filtros.busca.toLowerCase()) ||
                       doc.cliente.toLowerCase().includes(filtros.busca.toLowerCase());
-    const matchStatus = !filtros.status || doc.status === filtros.status;
-    const matchTipo = !filtros.tipo || doc.tipo === filtros.tipo;
+    const matchStatus = filtros.status === 'todos' || doc.status === filtros.status;
+    const matchTipo = filtros.tipo === 'todos' || doc.tipo === filtros.tipo;
     
     return matchBusca && matchStatus && matchTipo;
   });
@@ -323,7 +323,7 @@ export default function DocumentManager() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="valido">Válido</SelectItem>
                   <SelectItem value="vencido">Vencido</SelectItem>
                   <SelectItem value="pendente">Pendente</SelectItem>
@@ -339,7 +339,7 @@ export default function DocumentManager() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="todos">Todos</SelectItem>
                   <SelectItem value="Certidão">Certidão</SelectItem>
                   <SelectItem value="Contrato">Contrato</SelectItem>
                   <SelectItem value="Tributário">Tributário</SelectItem>
@@ -350,7 +350,7 @@ export default function DocumentManager() {
             <div className="flex items-end">
               <Button 
                 variant="outline" 
-                onClick={() => setFiltros({status: '', tipo: '', busca: ''})}
+                onClick={() => setFiltros({status: 'todos', tipo: 'todos', busca: ''})}
                 className="w-full"
               >
                 Limpar Filtros
