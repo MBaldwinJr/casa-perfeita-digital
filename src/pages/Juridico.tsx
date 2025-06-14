@@ -13,13 +13,58 @@ import { Scale, AlertTriangle, CheckCircle, FileText, Clock, Eye, Plus, BarChart
 import DocumentManager from "@/components/juridico/DocumentManager";
 import ProcessManager from "@/components/juridico/ProcessManager";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  useAlertasJuridicos, 
+  useAnalises, 
+  useProcessos, 
+  useDocumentosJuridicos, 
+  useCreateAnalise, 
+  useUpdateAlertaStatus,
+  useClientes,
+  useImoveis
+} from "@/hooks/useSupabaseQuery";
 
 export default function Juridico() {
   const { toast } = useToast();
+  
+  // Estado local
   const [activeTab, setActiveTab] = useState('overview');
   const [showNovaAnaliseDialog, setShowNovaAnaliseDialog] = useState(false);
   const [showAlertDialog, setShowAlertDialog] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    cliente_id: '',
+    imovel_id: '',
+    tipo: '',
+    prioridade: '',
+    responsavel: '',
+    prazo_conclusao: '',
+    observacoes: ''
+  });
+
+  // Hooks para dados
+  const { data: alertas = [], isLoading: loadingAlertas } = useAlertasJuridicos();
+  const { data: analises = [], isLoading: loadingAnalises } = useAnalises();
+  const { data: processos = [], isLoading: loadingProcessos } = useProcessos();
+  const { data: documentos = [], isLoading: loadingDocumentos } = useDocumentosJuridicos();
+  const { data: clientes = [] } = useClientes();
+  const { data: imoveis = [] } = useImoveis();
+  
+  const createAnalise = useCreateAnalise();
+  const updateAlertaStatus = useUpdateAlertaStatus();
+
+  // Loading state
+  const isLoading = loadingAlertas || loadingAnalises || loadingProcessos || loadingDocumentos;
+
+  // Calcular estatísticas reais
+  const estatisticas = {
+    processosAtivos: processos.filter(p => p.status === 'ativo').length,
+    documentosValidos: documentos.length > 0 ? Math.round((documentos.filter(d => d.status === 'valido').length / documentos.length) * 100) : 0,
+    alertasAtivos: alertas.length,
+    processosConcluidos: processos.filter(p => p.status === 'finalizado').length,
+    prazosVencidos: documentos.filter(d => d.data_vencimento && new Date(d.data_vencimento) < new Date()).length,
+    certificacoesOk: documentos.length > 0 ? Math.round((documentos.filter(d => d.status === 'valido').length / documentos.length) * 100) : 0
+  };
 
   const handleNovaAnalise = () => {
     setShowNovaAnaliseDialog(true);
@@ -30,28 +75,82 @@ export default function Juridico() {
     setShowAlertDialog(true);
   };
 
-  const handleCriarAnalise = () => {
-    toast({
-      title: "Análise Criada",
-      description: "Nova análise jurídica foi criada com sucesso.",
-    });
-    setShowNovaAnaliseDialog(false);
+  const handleCriarAnalise = async () => {
+    if (!formData.tipo || !formData.prioridade || !formData.responsavel) {
+      toast({
+        title: "Erro",
+        description: "Preencha os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await createAnalise.mutateAsync({
+        tipo: formData.tipo as any,
+        prioridade: formData.prioridade as any,
+        responsavel: formData.responsavel,
+        cliente_id: formData.cliente_id || undefined,
+        imovel_id: formData.imovel_id || undefined,
+        prazo_conclusao: formData.prazo_conclusao || undefined,
+        observacoes: formData.observacoes || undefined,
+        status: 'pendente'
+      });
+      
+      setShowNovaAnaliseDialog(false);
+      setFormData({
+        cliente_id: '',
+        imovel_id: '',
+        tipo: '',
+        prioridade: '',
+        responsavel: '',
+        prazo_conclusao: '',
+        observacoes: ''
+      });
+    } catch (error) {
+      // O erro já é tratado no hook
+    }
   };
 
-  const alertasJuridicos = [
-    { tipo: "Urgente", mensagem: "Certidão de distribuição vencida - Casa Jardim América", cor: "bg-red-500" },
-    { tipo: "Atenção", mensagem: "IPTU em atraso - Terreno Centro", cor: "bg-yellow-500" },
-    { tipo: "Info", mensagem: "Nova certidão disponível para retirada", cor: "bg-blue-500" },
-  ];
-
-  const estatisticas = {
-    processosAtivos: 12,
-    documentosValidos: 86,
-    alertasAtivos: 5,
-    processosConcluidos: 24,
-    prazosVencidos: 3,
-    certificacoesOk: 92
+  const handleMarcarComoVisto = async () => {
+    if (selectedAlert?.id) {
+      try {
+        await updateAlertaStatus.mutateAsync({
+          id: selectedAlert.id,
+          status: 'visto'
+        });
+        
+        toast({
+          title: "Alerta Marcado",
+          description: "Alerta marcado como visualizado.",
+        });
+        setShowAlertDialog(false);
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao marcar alerta como visto.",
+          variant: "destructive",
+        });
+      }
+    }
   };
+
+  const getCorPorTipo = (tipo: string) => {
+    switch (tipo) {
+      case 'urgente': return 'bg-red-500';
+      case 'atencao': return 'bg-yellow-500';
+      case 'info': return 'bg-blue-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -148,17 +247,21 @@ export default function Juridico() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {alertasJuridicos.map((alerta, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <Badge className={`${alerta.cor} text-white`}>
-                      {alerta.tipo}
-                    </Badge>
-                    <span className="flex-1">{alerta.mensagem}</span>
-                    <Button size="sm" variant="outline" onClick={() => handleVerAlerta(alerta)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                {alertas.length > 0 ? (
+                  alertas.map((alerta) => (
+                    <div key={alerta.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                      <Badge className={`${getCorPorTipo(alerta.tipo)} text-white`}>
+                        {alerta.tipo.charAt(0).toUpperCase() + alerta.tipo.slice(1)}
+                      </Badge>
+                      <span className="flex-1">{alerta.mensagem}</span>
+                      <Button size="sm" variant="outline" onClick={() => handleVerAlerta(alerta)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">Nenhum alerta ativo no momento</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -222,33 +325,37 @@ export default function Juridico() {
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="cliente">Cliente</Label>
-                <Select>
+                <Select value={formData.cliente_id} onValueChange={(value) => setFormData(prev => ({ ...prev, cliente_id: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="joao">João Silva</SelectItem>
-                    <SelectItem value="maria">Maria Santos</SelectItem>
-                    <SelectItem value="pedro">Pedro Costa</SelectItem>
+                    {clientes.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        {cliente.nome}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="imovel">Imóvel</Label>
-                <Select>
+                <Select value={formData.imovel_id} onValueChange={(value) => setFormData(prev => ({ ...prev, imovel_id: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o imóvel" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="casa1">Casa - Jardim América</SelectItem>
-                    <SelectItem value="terreno1">Terreno - Centro</SelectItem>
-                    <SelectItem value="casa2">Casa - Vila Nova</SelectItem>
+                    {imoveis.map((imovel) => (
+                      <SelectItem key={imovel.id} value={imovel.id}>
+                        {imovel.titulo} - {imovel.endereco}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="tipo">Tipo de Análise</Label>
-                <Select>
+                <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
@@ -262,7 +369,7 @@ export default function Juridico() {
               </div>
               <div>
                 <Label htmlFor="prioridade">Prioridade</Label>
-                <Select>
+                <Select value={formData.prioridade} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a prioridade" />
                   </SelectTrigger>
@@ -276,25 +383,35 @@ export default function Juridico() {
               </div>
               <div>
                 <Label htmlFor="prazo">Prazo</Label>
-                <Input id="prazo" type="date" />
+                <Input 
+                  id="prazo" 
+                  type="date" 
+                  value={formData.prazo_conclusao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, prazo_conclusao: e.target.value }))}
+                />
               </div>
               <div>
                 <Label htmlFor="responsavel">Responsável</Label>
-                <Select>
+                <Select value={formData.responsavel} onValueChange={(value) => setFormData(prev => ({ ...prev, responsavel: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dr-carlos">Dr. Carlos Santos</SelectItem>
-                    <SelectItem value="dra-ana">Dra. Ana Costa</SelectItem>
-                    <SelectItem value="dr-roberto">Dr. Roberto Lima</SelectItem>
+                    <SelectItem value="Dr. Carlos Santos">Dr. Carlos Santos</SelectItem>
+                    <SelectItem value="Dra. Ana Costa">Dra. Ana Costa</SelectItem>
+                    <SelectItem value="Dr. Roberto Lima">Dr. Roberto Lima</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
               <Label htmlFor="observacoes">Observações</Label>
-              <Textarea id="observacoes" placeholder="Detalhes sobre a análise solicitada..." />
+              <Textarea 
+                id="observacoes" 
+                placeholder="Detalhes sobre a análise solicitada..." 
+                value={formData.observacoes}
+                onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+              />
             </div>
             <div className="flex space-x-2">
               <Button onClick={handleCriarAnalise} className="flex-1">
@@ -318,25 +435,37 @@ export default function Juridico() {
             <div className="space-y-4">
               <div>
                 <Label className="font-semibold">Tipo</Label>
-                <Badge className={`${selectedAlert.cor} text-white ml-2`}>
-                  {selectedAlert.tipo}
+                <Badge className={`${getCorPorTipo(selectedAlert.tipo)} text-white ml-2`}>
+                  {selectedAlert.tipo.charAt(0).toUpperCase() + selectedAlert.tipo.slice(1)}
                 </Badge>
+              </div>
+              <div>
+                <Label className="font-semibold">Título</Label>
+                <p className="text-sm font-medium mt-1">{selectedAlert.titulo}</p>
               </div>
               <div>
                 <Label className="font-semibold">Mensagem</Label>
                 <p className="text-sm text-muted-foreground mt-1">{selectedAlert.mensagem}</p>
               </div>
+              {selectedAlert.data_vencimento && (
+                <div>
+                  <Label className="font-semibold">Data de Vencimento</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {new Date(selectedAlert.data_vencimento).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              )}
               <div>
                 <Label className="font-semibold">Ações Recomendadas</Label>
                 <div className="mt-2 space-y-2">
-                  {selectedAlert.tipo === "Urgente" && (
-                    <p className="text-sm">• Renovar certidão de distribuição imediatamente</p>
+                  {selectedAlert.tipo === "urgente" && (
+                    <p className="text-sm">• Ação imediata necessária - Verifique os detalhes e tome as medidas cabíveis</p>
                   )}
-                  {selectedAlert.tipo === "Atenção" && (
-                    <p className="text-sm">• Verificar situação do IPTU e efetuar pagamento</p>
+                  {selectedAlert.tipo === "atencao" && (
+                    <p className="text-sm">• Requer atenção - Agende uma revisão nos próximos dias</p>
                   )}
-                  {selectedAlert.tipo === "Info" && (
-                    <p className="text-sm">• Agendar retirada da certidão no cartório</p>
+                  {selectedAlert.tipo === "info" && (
+                    <p className="text-sm">• Informativo - Tome conhecimento da situação</p>
                   )}
                 </div>
               </div>
@@ -344,13 +473,7 @@ export default function Juridico() {
                 <Button variant="outline" onClick={() => setShowAlertDialog(false)} className="flex-1">
                   Fechar
                 </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Alerta Marcado",
-                    description: "Alerta marcado como visualizado.",
-                  });
-                  setShowAlertDialog(false);
-                }}>
+                <Button onClick={handleMarcarComoVisto}>
                   Marcar como Visto
                 </Button>
               </div>

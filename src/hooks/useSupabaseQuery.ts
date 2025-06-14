@@ -71,6 +71,83 @@ export interface Financiamento {
   imoveis?: Imovel;
 }
 
+export interface AnaliseJuridica {
+  id: string;
+  user_id: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  tipo: 'documentos' | 'viabilidade' | 'riscos' | 'due_diligence';
+  prioridade: 'baixa' | 'media' | 'alta' | 'urgente';
+  status: 'pendente' | 'em_andamento' | 'concluida' | 'cancelada';
+  responsavel: string;
+  prazo_conclusao?: string;
+  observacoes?: string;
+  resultado?: string;
+  created_at: string;
+  updated_at: string;
+  clientes?: Cliente;
+  imoveis?: Imovel;
+}
+
+export interface ProcessoJuridico {
+  id: string;
+  user_id: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  numero_processo?: string;
+  tipo: string;
+  instancia: string;
+  vara?: string;
+  status: 'ativo' | 'arquivado' | 'suspenso' | 'finalizado';
+  data_inicio: string;
+  data_conclusao?: string;
+  valor_causa?: number;
+  advogado_responsavel: string;
+  descricao?: string;
+  observacoes?: string;
+  created_at: string;
+  updated_at: string;
+  clientes?: Cliente;
+  imoveis?: Imovel;
+}
+
+export interface DocumentoJuridico {
+  id: string;
+  user_id: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  analise_id?: string;
+  processo_id?: string;
+  nome: string;
+  tipo: string;
+  categoria: string;
+  status: 'pendente' | 'valido' | 'vencido' | 'invalido';
+  data_emissao?: string;
+  data_vencimento?: string;
+  orgao_emissor?: string;
+  numero_documento?: string;
+  observacoes?: string;
+  arquivo_url?: string;
+  created_at: string;
+  updated_at: string;
+  clientes?: Cliente;
+  imoveis?: Imovel;
+}
+
+export interface AlertaJuridico {
+  id: string;
+  user_id: string;
+  tipo: 'urgente' | 'atencao' | 'info';
+  titulo: string;
+  mensagem: string;
+  status: 'ativo' | 'visto' | 'resolvido';
+  data_vencimento?: string;
+  entidade_tipo?: string;
+  entidade_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Hooks for fetching data
 export const useClientes = () => {
   const { user } = useAuth();
@@ -293,6 +370,155 @@ export const useCreateFinanciamento = () => {
         description: error.message,
         variant: "destructive",
       });
+    },
+  });
+};
+
+// Hooks jurídicos
+export const useAnalises = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['analises', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('analises_juridicas')
+        .select(`
+          *,
+          clientes:cliente_id(*),
+          imoveis:imovel_id(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as AnaliseJuridica[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useProcessos = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['processos', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('processos_juridicos')
+        .select(`
+          *,
+          clientes:cliente_id(*),
+          imoveis:imovel_id(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ProcessoJuridico[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useDocumentosJuridicos = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['documentos', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('documentos_juridicos')
+        .select(`
+          *,
+          clientes:cliente_id(*),
+          imoveis:imovel_id(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as DocumentoJuridico[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useAlertasJuridicos = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['alertas', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('alertas_juridicos')
+        .select('*')
+        .eq('status', 'ativo')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as AlertaJuridico[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useCreateAnalise = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (analise: Omit<AnaliseJuridica, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'clientes' | 'imoveis'>) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('analises_juridicas')
+        .insert([{ ...analise, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['analises'] });
+      toast({
+        title: "Análise criada!",
+        description: "Análise jurídica foi criada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar análise",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useUpdateAlertaStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'ativo' | 'visto' | 'resolvido' }) => {
+      const { data, error } = await supabase
+        .from('alertas_juridicos')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alertas'] });
     },
   });
 };

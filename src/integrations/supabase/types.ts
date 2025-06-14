@@ -9,6 +9,111 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alertas_juridicos: {
+        Row: {
+          created_at: string
+          data_vencimento: string | null
+          entidade_id: string | null
+          entidade_tipo: string | null
+          id: string
+          mensagem: string
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_vencimento?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
+          id?: string
+          mensagem: string
+          status?: string
+          tipo: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_vencimento?: string | null
+          entidade_id?: string | null
+          entidade_tipo?: string | null
+          id?: string
+          mensagem?: string
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      analises_juridicas: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          id: string
+          imovel_id: string | null
+          observacoes: string | null
+          prazo_conclusao: string | null
+          prioridade: string
+          responsavel: string
+          resultado: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          prazo_conclusao?: string | null
+          prioridade: string
+          responsavel: string
+          resultado?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          prazo_conclusao?: string | null
+          prioridade?: string
+          responsavel?: string
+          resultado?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analises_juridicas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analises_juridicas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           cep: string | null
@@ -103,6 +208,98 @@ export type Database = {
             columns: ["proposta_id"]
             isOneToOne: false
             referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentos_juridicos: {
+        Row: {
+          analise_id: string | null
+          arquivo_url: string | null
+          categoria: string
+          cliente_id: string | null
+          created_at: string
+          data_emissao: string | null
+          data_vencimento: string | null
+          id: string
+          imovel_id: string | null
+          nome: string
+          numero_documento: string | null
+          observacoes: string | null
+          orgao_emissor: string | null
+          processo_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analise_id?: string | null
+          arquivo_url?: string | null
+          categoria: string
+          cliente_id?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_vencimento?: string | null
+          id?: string
+          imovel_id?: string | null
+          nome: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          processo_id?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analise_id?: string | null
+          arquivo_url?: string | null
+          categoria?: string
+          cliente_id?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_vencimento?: string | null
+          id?: string
+          imovel_id?: string | null
+          nome?: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          processo_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_juridicos_analise_id_fkey"
+            columns: ["analise_id"]
+            isOneToOne: false
+            referencedRelation: "analises_juridicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_juridicos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_juridicos_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentos_juridicos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos_juridicos"
             referencedColumns: ["id"]
           },
         ]
@@ -235,6 +432,81 @@ export type Database = {
           valor?: number
         }
         Relationships: []
+      }
+      processos_juridicos: {
+        Row: {
+          advogado_responsavel: string
+          cliente_id: string | null
+          created_at: string
+          data_conclusao: string | null
+          data_inicio: string
+          descricao: string | null
+          id: string
+          imovel_id: string | null
+          instancia: string
+          numero_processo: string | null
+          observacoes: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+          valor_causa: number | null
+          vara: string | null
+        }
+        Insert: {
+          advogado_responsavel: string
+          cliente_id?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_inicio: string
+          descricao?: string | null
+          id?: string
+          imovel_id?: string | null
+          instancia: string
+          numero_processo?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+          valor_causa?: number | null
+          vara?: string | null
+        }
+        Update: {
+          advogado_responsavel?: string
+          cliente_id?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          imovel_id?: string | null
+          instancia?: string
+          numero_processo?: string | null
+          observacoes?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+          valor_causa?: number | null
+          vara?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processos_juridicos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processos_juridicos_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
