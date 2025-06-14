@@ -11,6 +11,11 @@ import ProcessManager from "@/components/juridico/ProcessManager";
 export default function Juridico() {
   const [activeTab, setActiveTab] = useState('overview');
 
+  const handleNovaAnalise = () => {
+    // Implementar ação para nova análise
+    console.log('Nova análise clicada');
+  };
+
   const alertasJuridicos = [
     { tipo: "Urgente", mensagem: "Certidão de distribuição vencida - Casa Jardim América", cor: "bg-red-500" },
     { tipo: "Atenção", mensagem: "IPTU em atraso - Terreno Centro", cor: "bg-yellow-500" },
@@ -33,7 +38,7 @@ export default function Juridico() {
           <h2 className="text-2xl font-bold">Módulo Jurídico</h2>
           <p className="text-muted-foreground">Gestão completa de processos e documentos jurídicos</p>
         </div>
-        <Button>
+        <Button onClick={handleNovaAnalise}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Análise
         </Button>
@@ -127,7 +132,7 @@ export default function Juridico() {
                       {alerta.tipo}
                     </Badge>
                     <span className="flex-1">{alerta.mensagem}</span>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => console.log('Ver alerta:', alerta.mensagem)}>
                       <Eye className="h-4 w-4" />
                     </Button>
                   </div>
