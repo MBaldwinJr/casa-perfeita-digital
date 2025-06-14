@@ -1,50 +1,15 @@
 
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Scale, AlertTriangle, CheckCircle, FileText, Clock, Eye } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Scale, AlertTriangle, CheckCircle, FileText, Clock, Eye, Plus, BarChart3 } from "lucide-react";
+import DocumentManager from "@/components/juridico/DocumentManager";
+import ProcessManager from "@/components/juridico/ProcessManager";
 
 export default function Juridico() {
-  const processos = [
-    {
-      id: 1,
-      imovel: "Casa - Jardim América",
-      cliente: "João Silva",
-      etapa: "Análise de Documentos",
-      progresso: 75,
-      status: "Em Andamento",
-      statusColor: "bg-blue-500",
-      alertas: 1
-    },
-    {
-      id: 2,
-      imovel: "Terreno - Centro",
-      cliente: "Maria Santos",
-      etapa: "Certidões Negativas",
-      progresso: 90,
-      status: "Quase Pronto",
-      statusColor: "bg-green-500",
-      alertas: 0
-    },
-    {
-      id: 3,
-      imovel: "Casa - Vila Nova",
-      cliente: "Pedro Costa",
-      etapa: "Escritura",
-      progresso: 40,
-      status: "Pendente",
-      statusColor: "bg-yellow-500",
-      alertas: 2
-    },
-  ];
-
-  const documentos = [
-    { nome: "Certidão de Ônus Reais", status: "Válida", vencimento: "15/03/2024", cor: "text-green-600" },
-    { nome: "Certidão de Distribuição", status: "Vencida", vencimento: "10/01/2024", cor: "text-red-600" },
-    { nome: "IPTU", status: "Válida", vencimento: "30/06/2024", cor: "text-green-600" },
-    { nome: "Matrícula Atualizada", status: "Pendente", vencimento: "-", cor: "text-yellow-600" },
-  ];
+  const [activeTab, setActiveTab] = useState('overview');
 
   const alertasJuridicos = [
     { tipo: "Urgente", mensagem: "Certidão de distribuição vencida - Casa Jardim América", cor: "bg-red-500" },
@@ -52,148 +17,173 @@ export default function Juridico() {
     { tipo: "Info", mensagem: "Nova certidão disponível para retirada", cor: "bg-blue-500" },
   ];
 
+  const estatisticas = {
+    processosAtivos: 12,
+    documentosValidos: 86,
+    alertasAtivos: 5,
+    processosConcluidos: 24,
+    prazosVencidos: 3,
+    certificacoesOk: 92
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Módulo Jurídico</h2>
-          <p className="text-muted-foreground">Verificação de documentos e processos legais</p>
+          <p className="text-muted-foreground">Gestão completa de processos e documentos jurídicos</p>
         </div>
         <Button>
-          <FileText className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2" />
           Nova Análise
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Processos Ativos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 esta semana</p>
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="processos">Processos</TabsTrigger>
+          <TabsTrigger value="documentos">Documentos</TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Documentos Válidos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">86%</div>
-            <p className="text-xs text-muted-foreground">3 documentos vencidos</p>
-          </CardContent>
-        </Card>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Estatísticas Gerais */}
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Processos Ativos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{estatisticas.processosAtivos}</div>
+                <p className="text-xs text-muted-foreground">+2 esta semana</p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Alertas Ativos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">5</div>
-            <p className="text-xs text-muted-foreground">2 urgentes</p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Documentos Válidos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{estatisticas.documentosValidos}%</div>
+                <p className="text-xs text-muted-foreground">3 documentos vencidos</p>
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <AlertTriangle className="h-5 w-5 mr-2" />
-            Alertas Jurídicos
-          </CardTitle>
-          <CardDescription>Pendências que requerem atenção imediata</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {alertasJuridicos.map((alerta, index) => (
-              <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
-                <Badge className={`${alerta.cor} text-white`}>
-                  {alerta.tipo}
-                </Badge>
-                <span className="flex-1">{alerta.mensagem}</span>
-                <Button size="sm" variant="outline">
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Alertas Ativos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{estatisticas.alertasAtivos}</div>
+                <p className="text-xs text-muted-foreground">2 urgentes</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Concluídos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{estatisticas.processosConcluidos}</div>
+                <p className="text-xs text-muted-foreground">este mês</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Prazos Vencidos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{estatisticas.prazosVencidos}</div>
+                <p className="text-xs text-muted-foreground">requer ação</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Certificações</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{estatisticas.certificacoesOk}%</div>
+                <p className="text-xs text-muted-foreground">conformidade</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Processos em Andamento</CardTitle>
-          <CardDescription>Acompanhe o status dos processos jurídicos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {processos.map((processo) => (
-              <div key={processo.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="font-semibold">{processo.imovel}</h4>
-                    <p className="text-sm text-muted-foreground">{processo.cliente}</p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {processo.alertas > 0 && (
-                      <Badge className="bg-red-500 text-white">
-                        {processo.alertas} alerta{processo.alertas > 1 ? 's' : ''}
-                      </Badge>
-                    )}
-                    <Badge className={`${processo.statusColor} text-white`}>
-                      {processo.status}
+          {/* Alertas Jurídicos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertTriangle className="h-5 w-5 mr-2" />
+                Alertas Jurídicos
+              </CardTitle>
+              <CardDescription>Pendências que requerem atenção imediata</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {alertasJuridicos.map((alerta, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 border rounded-lg">
+                    <Badge className={`${alerta.cor} text-white`}>
+                      {alerta.tipo}
                     </Badge>
+                    <span className="flex-1">{alerta.mensagem}</span>
+                    <Button size="sm" variant="outline">
+                      <Eye className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Etapa: {processo.etapa}</span>
-                    <span>{processo.progresso}%</span>
-                  </div>
-                  <Progress value={processo.progresso} className="h-2" />
-                </div>
-                
-                <div className="flex space-x-2 mt-3">
-                  <Button size="sm" variant="outline">Ver Documentos</Button>
-                  <Button size="sm">Atualizar Status</Button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Status dos Documentos</CardTitle>
-          <CardDescription>Verificação automática de validade</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {documentos.map((doc, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">{doc.nome}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Vencimento: {doc.vencimento}
-                  </p>
+          {/* Dashboard de Produtividade */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="h-5 w-5 mr-2" />
+                Resumo de Produtividade
+              </CardTitle>
+              <CardDescription>Performance do setor jurídico nos últimos 30 dias</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="border-l-4 border-green-500 pl-4">
+                    <h4 className="font-semibold text-green-700">Processos Finalizados</h4>
+                    <p className="text-2xl font-bold text-green-600">24</p>
+                    <p className="text-sm text-muted-foreground">+20% vs mês anterior</p>
+                  </div>
+                  <div className="border-l-4 border-blue-500 pl-4">
+                    <h4 className="font-semibold text-blue-700">Tempo Médio de Processo</h4>
+                    <p className="text-2xl font-bold text-blue-600">45 dias</p>
+                    <p className="text-sm text-muted-foreground">-5 dias vs mês anterior</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <Badge 
-                    variant="outline" 
-                    className={`${doc.cor} border-current`}
-                  >
-                    {doc.status}
-                  </Badge>
+                <div className="space-y-4">
+                  <div className="border-l-4 border-yellow-500 pl-4">
+                    <h4 className="font-semibold text-yellow-700">Documentos Processados</h4>
+                    <p className="text-2xl font-bold text-yellow-600">156</p>
+                    <p className="text-sm text-muted-foreground">+12% vs mês anterior</p>
+                  </div>
+                  <div className="border-l-4 border-purple-500 pl-4">
+                    <h4 className="font-semibold text-purple-700">Taxa de Aprovação</h4>
+                    <p className="text-2xl font-bold text-purple-600">94%</p>
+                    <p className="text-sm text-muted-foreground">+2% vs mês anterior</p>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="processos">
+          <ProcessManager />
+        </TabsContent>
+
+        <TabsContent value="documentos">
+          <DocumentManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
