@@ -4,16 +4,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Scale, AlertTriangle, CheckCircle, FileText, Clock, Eye, Plus, BarChart3 } from "lucide-react";
 import DocumentManager from "@/components/juridico/DocumentManager";
 import ProcessManager from "@/components/juridico/ProcessManager";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Juridico() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  const [showNovaAnaliseDialog, setShowNovaAnaliseDialog] = useState(false);
+  const [showAlertDialog, setShowAlertDialog] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState<any>(null);
 
   const handleNovaAnalise = () => {
-    // Implementar ação para nova análise
-    console.log('Nova análise clicada');
+    setShowNovaAnaliseDialog(true);
+  };
+
+  const handleVerAlerta = (alerta: any) => {
+    setSelectedAlert(alerta);
+    setShowAlertDialog(true);
+  };
+
+  const handleCriarAnalise = () => {
+    toast({
+      title: "Análise Criada",
+      description: "Nova análise jurídica foi criada com sucesso.",
+    });
+    setShowNovaAnaliseDialog(false);
   };
 
   const alertasJuridicos = [
@@ -132,7 +154,7 @@ export default function Juridico() {
                       {alerta.tipo}
                     </Badge>
                     <span className="flex-1">{alerta.mensagem}</span>
-                    <Button size="sm" variant="outline" onClick={() => console.log('Ver alerta:', alerta.mensagem)}>
+                    <Button size="sm" variant="outline" onClick={() => handleVerAlerta(alerta)}>
                       <Eye className="h-4 w-4" />
                     </Button>
                   </div>
@@ -189,6 +211,153 @@ export default function Juridico() {
           <DocumentManager />
         </TabsContent>
       </Tabs>
+
+      {/* Modal Nova Análise */}
+      <Dialog open={showNovaAnaliseDialog} onOpenChange={setShowNovaAnaliseDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova Análise Jurídica</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="cliente">Cliente</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="joao">João Silva</SelectItem>
+                    <SelectItem value="maria">Maria Santos</SelectItem>
+                    <SelectItem value="pedro">Pedro Costa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="imovel">Imóvel</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o imóvel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="casa1">Casa - Jardim América</SelectItem>
+                    <SelectItem value="terreno1">Terreno - Centro</SelectItem>
+                    <SelectItem value="casa2">Casa - Vila Nova</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="tipo">Tipo de Análise</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="documentos">Análise de Documentos</SelectItem>
+                    <SelectItem value="viabilidade">Viabilidade Jurídica</SelectItem>
+                    <SelectItem value="riscos">Análise de Riscos</SelectItem>
+                    <SelectItem value="due_diligence">Due Diligence</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="prioridade">Prioridade</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="media">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="urgente">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="prazo">Prazo</Label>
+                <Input id="prazo" type="date" />
+              </div>
+              <div>
+                <Label htmlFor="responsavel">Responsável</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dr-carlos">Dr. Carlos Santos</SelectItem>
+                    <SelectItem value="dra-ana">Dra. Ana Costa</SelectItem>
+                    <SelectItem value="dr-roberto">Dr. Roberto Lima</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea id="observacoes" placeholder="Detalhes sobre a análise solicitada..." />
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleCriarAnalise} className="flex-1">
+                Criar Análise
+              </Button>
+              <Button variant="outline" onClick={() => setShowNovaAnaliseDialog(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Detalhes do Alerta */}
+      <Dialog open={showAlertDialog} onOpenChange={setShowAlertDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalhes do Alerta</DialogTitle>
+          </DialogHeader>
+          {selectedAlert && (
+            <div className="space-y-4">
+              <div>
+                <Label className="font-semibold">Tipo</Label>
+                <Badge className={`${selectedAlert.cor} text-white ml-2`}>
+                  {selectedAlert.tipo}
+                </Badge>
+              </div>
+              <div>
+                <Label className="font-semibold">Mensagem</Label>
+                <p className="text-sm text-muted-foreground mt-1">{selectedAlert.mensagem}</p>
+              </div>
+              <div>
+                <Label className="font-semibold">Ações Recomendadas</Label>
+                <div className="mt-2 space-y-2">
+                  {selectedAlert.tipo === "Urgente" && (
+                    <p className="text-sm">• Renovar certidão de distribuição imediatamente</p>
+                  )}
+                  {selectedAlert.tipo === "Atenção" && (
+                    <p className="text-sm">• Verificar situação do IPTU e efetuar pagamento</p>
+                  )}
+                  {selectedAlert.tipo === "Info" && (
+                    <p className="text-sm">• Agendar retirada da certidão no cartório</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={() => setShowAlertDialog(false)} className="flex-1">
+                  Fechar
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Alerta Marcado",
+                    description: "Alerta marcado como visualizado.",
+                  });
+                  setShowAlertDialog(false);
+                }}>
+                  Marcar como Visto
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
