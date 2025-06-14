@@ -11,18 +11,23 @@ import { CreditCard, CalendarIcon, Calculator } from "lucide-react";
 import { format } from "date-fns";
 import { useClientes, useImoveis, useCreateFinanciamento } from "@/hooks/useSupabaseQuery";
 
-export default function FinanciamentoForm() {
+interface FinanciamentoFormProps {
+  financiamento?: any;
+  onClose?: () => void;
+}
+
+export default function FinanciamentoForm({ financiamento: financiamentoInicial, onClose }: FinanciamentoFormProps = {}) {
   const [financiamento, setFinanciamento] = useState({
-    cliente_id: '',
-    imovel_id: '',
-    banco: '',
-    valor_financiado: '',
-    entrada: '',
-    prazo_meses: '',
-    taxa_juros: '',
-    valor_parcela: '',
-    status: 'analise',
-    observacoes: ''
+    cliente_id: financiamentoInicial?.cliente_id || '',
+    imovel_id: financiamentoInicial?.imovel_id || '',
+    banco: financiamentoInicial?.banco || '',
+    valor_financiado: financiamentoInicial?.valor_financiado?.toString() || '',
+    entrada: financiamentoInicial?.entrada?.toString() || '',
+    prazo_meses: financiamentoInicial?.prazo_meses?.toString() || '',
+    taxa_juros: financiamentoInicial?.taxa_juros?.toString() || '',
+    valor_parcela: financiamentoInicial?.valor_parcela?.toString() || '',
+    status: financiamentoInicial?.status || 'analise',
+    observacoes: financiamentoInicial?.observacoes || ''
   });
 
   const [dataAprovacao, setDataAprovacao] = useState<Date>();
@@ -58,22 +63,15 @@ export default function FinanciamentoForm() {
       status: financiamento.status,
       data_aprovacao: dataAprovacao?.toISOString().split('T')[0],
       observacoes: financiamento.observacoes || undefined,
+    }, {
+      onSuccess: () => {
+        onClose?.();
+      }
     });
+  };
 
-    // Reset form
-    setFinanciamento({
-      cliente_id: '',
-      imovel_id: '',
-      banco: '',
-      valor_financiado: '',
-      entrada: '',
-      prazo_meses: '',
-      taxa_juros: '',
-      valor_parcela: '',
-      status: 'analise',
-      observacoes: ''
-    });
-    setDataAprovacao(undefined);
+  const handleCancel = () => {
+    onClose?.();
   };
 
   return (
@@ -82,9 +80,11 @@ export default function FinanciamentoForm() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <CreditCard className="h-5 w-5 mr-2" />
-            Novo Financiamento
+            {financiamentoInicial ? 'Editar Financiamento' : 'Novo Financiamento'}
           </CardTitle>
-          <CardDescription>Cadastrar solicitação de financiamento</CardDescription>
+          <CardDescription>
+            {financiamentoInicial ? 'Editar solicitação de financiamento' : 'Cadastrar solicitação de financiamento'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
@@ -258,12 +258,12 @@ export default function FinanciamentoForm() {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
+            <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
             <Button 
               onClick={salvarFinanciamento} 
               disabled={createFinanciamento.isPending || !financiamento.cliente_id || !financiamento.imovel_id || !financiamento.banco || !financiamento.valor_financiado}
             >
-              {createFinanciamento.isPending ? "Salvando..." : "Salvar Financiamento"}
+              {createFinanciamento.isPending ? "Salvando..." : financiamentoInicial ? "Atualizar Financiamento" : "Salvar Financiamento"}
             </Button>
           </div>
         </CardContent>

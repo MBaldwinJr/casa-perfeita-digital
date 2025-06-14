@@ -64,9 +64,11 @@ export default function PropostaForm({ proposta: propostaInicial, onClose }: Pro
         <CardHeader>
           <CardTitle className="flex items-center">
             <FileText className="h-5 w-5 mr-2" />
-            Nova Proposta
+            {propostaInicial ? 'Editar Proposta' : 'Nova Proposta'}
           </CardTitle>
-          <CardDescription>Criar uma nova proposta de compra</CardDescription>
+          <CardDescription>
+            {propostaInicial ? 'Editar proposta de compra' : 'Criar uma nova proposta de compra'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
@@ -210,7 +212,7 @@ export default function PropostaForm({ proposta: propostaInicial, onClose }: Pro
               onClick={salvarProposta}
               disabled={createProposta.isPending || !proposta.cliente_id || !proposta.imovel_id || !proposta.valor_proposta || !proposta.forma_pagamento}
             >
-              {createProposta.isPending ? "Salvando..." : "Salvar Proposta"}
+              {createProposta.isPending ? "Salvando..." : propostaInicial ? "Atualizar Proposta" : "Salvar Proposta"}
             </Button>
           </div>
         </CardContent>

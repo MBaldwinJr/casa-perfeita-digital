@@ -5,11 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, CreditCard, Calendar, DollarSign, Building, User, Eye, Edit } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import FinanciamentoForm from "@/components/forms/FinanciamentoForm";
 import { useFinanciamentos } from "@/hooks/useSupabaseQuery";
 
 export default function Financiamento() {
   const [showForm, setShowForm] = useState(false);
+  const [selectedFinanciamento, setSelectedFinanciamento] = useState(null);
+  const [viewDetails, setViewDetails] = useState(null);
   const { data: financiamentos = [], isLoading } = useFinanciamentos();
 
   if (isLoading) {
@@ -58,10 +61,110 @@ export default function Financiamento() {
             <DialogHeader>
               <DialogTitle>Cadastrar Novo Financiamento</DialogTitle>
             </DialogHeader>
-            <FinanciamentoForm />
+            <FinanciamentoForm 
+              financiamento={selectedFinanciamento}
+              onClose={() => {
+                setShowForm(false);
+                setSelectedFinanciamento(null);
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Modal de Detalhes */}
+      <Dialog open={!!viewDetails} onOpenChange={() => setViewDetails(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Financiamento</DialogTitle>
+          </DialogHeader>
+          {viewDetails && (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="font-semibold">Cliente</Label>
+                  <p className="text-sm text-muted-foreground">{viewDetails.clientes?.nome || 'Cliente não especificado'}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Imóvel</Label>
+                  <p className="text-sm text-muted-foreground">{viewDetails.imoveis?.titulo || 'Imóvel não especificado'}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Banco</Label>
+                  <p className="text-sm text-muted-foreground">{viewDetails.banco}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Status</Label>
+                  <p className="text-sm text-muted-foreground capitalize">{getStatusLabel(viewDetails.status)}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Valor Financiado</Label>
+                  <p className="text-sm text-muted-foreground font-bold text-primary">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(viewDetails.valor_financiado)}
+                  </p>
+                </div>
+                {viewDetails.entrada && (
+                  <div>
+                    <Label className="font-semibold">Entrada</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(viewDetails.entrada)}
+                    </p>
+                  </div>
+                )}
+                {viewDetails.prazo_meses && (
+                  <div>
+                    <Label className="font-semibold">Prazo</Label>
+                    <p className="text-sm text-muted-foreground">{viewDetails.prazo_meses} meses</p>
+                  </div>
+                )}
+                {viewDetails.taxa_juros && (
+                  <div>
+                    <Label className="font-semibold">Taxa de Juros</Label>
+                    <p className="text-sm text-muted-foreground">{viewDetails.taxa_juros}% a.a.</p>
+                  </div>
+                )}
+                {viewDetails.valor_parcela && (
+                  <div>
+                    <Label className="font-semibold">Valor da Parcela</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(viewDetails.valor_parcela)}
+                    </p>
+                  </div>
+                )}
+                {viewDetails.data_aprovacao && (
+                  <div>
+                    <Label className="font-semibold">Data de Aprovação</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(viewDetails.data_aprovacao).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <Label className="font-semibold">Data de Criação</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(viewDetails.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                {viewDetails.observacoes && (
+                  <div className="md:col-span-2">
+                    <Label className="font-semibold">Observações</Label>
+                    <p className="text-sm text-muted-foreground">{viewDetails.observacoes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {financiamentos.length === 0 ? (
         <Card>
@@ -135,16 +238,26 @@ export default function Financiamento() {
                       {new Date(financiamento.created_at).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver Detalhes
-                    </Button>
-                    <Button size="sm">
-                      <Edit className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
-                  </div>
+                   <div className="flex space-x-2">
+                     <Button 
+                       variant="outline" 
+                       size="sm"
+                       onClick={() => setViewDetails(financiamento)}
+                     >
+                       <Eye className="h-4 w-4 mr-1" />
+                       Ver Detalhes
+                     </Button>
+                     <Button 
+                       size="sm"
+                       onClick={() => {
+                         setSelectedFinanciamento(financiamento);
+                         setShowForm(true);
+                       }}
+                     >
+                       <Edit className="h-4 w-4 mr-1" />
+                       Editar
+                     </Button>
+                   </div>
                 </div>
               </CardContent>
             </Card>

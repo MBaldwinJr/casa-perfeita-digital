@@ -6,12 +6,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Calendar, DollarSign, User, Edit, Eye, FileText } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import PropostaForm from "@/components/forms/PropostaForm";
+import ContractModal from "@/components/modals/ContractModal";
 import { usePropostas } from "@/hooks/useSupabaseQuery";
 
 export default function Propostas() {
   const [showForm, setShowForm] = useState(false);
   const [selectedProposta, setSelectedProposta] = useState(null);
   const [viewDetails, setViewDetails] = useState(null);
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [contractProposta, setContractProposta] = useState(null);
   const { data: propostas = [], isLoading } = usePropostas();
 
   if (isLoading) {
@@ -238,7 +241,13 @@ export default function Propostas() {
                        <Eye className="h-4 w-4 mr-1" />
                        Ver Detalhes
                      </Button>
-                     <Button size="sm">
+                     <Button 
+                       size="sm"
+                       onClick={() => {
+                         setContractProposta(proposta);
+                         setShowContractModal(true);
+                       }}
+                     >
                        Gerar Contrato
                      </Button>
                      <Button 
@@ -259,6 +268,13 @@ export default function Propostas() {
           ))}
         </div>
       )}
+
+      {/* Modal de Geração de Contrato */}
+      <ContractModal 
+        open={showContractModal}
+        onOpenChange={setShowContractModal}
+        proposta={contractProposta}
+      />
     </div>
   );
 }
