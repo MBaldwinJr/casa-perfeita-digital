@@ -7,17 +7,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { User, Phone, Mail, MapPin } from "lucide-react";
 import { useCreateCliente } from "@/hooks/useSupabaseQuery";
 
-export default function ClienteForm() {
+interface ClienteFormProps {
+  cliente?: any;
+  onClose?: () => void;
+}
+
+export default function ClienteForm({ cliente: clienteInicial, onClose }: ClienteFormProps = {}) {
   const [cliente, setCliente] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    cpf_cnpj: '',
-    endereco: '',
-    cidade: '',
-    estado: '',
-    cep: '',
-    observacoes: ''
+    nome: clienteInicial?.nome || '',
+    email: clienteInicial?.email || '',
+    telefone: clienteInicial?.telefone || '',
+    cpf_cnpj: clienteInicial?.cpf_cnpj || '',
+    endereco: clienteInicial?.endereco || '',
+    cidade: clienteInicial?.cidade || '',
+    estado: clienteInicial?.estado || '',
+    cep: clienteInicial?.cep || '',
+    observacoes: clienteInicial?.observacoes || ''
   });
 
   const createCliente = useCreateCliente();
@@ -37,20 +42,39 @@ export default function ClienteForm() {
       estado: cliente.estado || undefined,
       cep: cliente.cep || undefined,
       observacoes: cliente.observacoes || undefined,
+    }, {
+      onSuccess: () => {
+        // Reset form
+        setCliente({
+          nome: '',
+          email: '',
+          telefone: '',
+          cpf_cnpj: '',
+          endereco: '',
+          cidade: '',
+          estado: '',
+          cep: '',
+          observacoes: ''
+        });
+        onClose?.();
+      }
     });
+  };
 
+  const handleCancel = () => {
     // Reset form
     setCliente({
-      nome: '',
-      email: '',
-      telefone: '',
-      cpf_cnpj: '',
-      endereco: '',
-      cidade: '',
-      estado: '',
-      cep: '',
-      observacoes: ''
+      nome: clienteInicial?.nome || '',
+      email: clienteInicial?.email || '',
+      telefone: clienteInicial?.telefone || '',
+      cpf_cnpj: clienteInicial?.cpf_cnpj || '',
+      endereco: clienteInicial?.endereco || '',
+      cidade: clienteInicial?.cidade || '',
+      estado: clienteInicial?.estado || '',
+      cep: clienteInicial?.cep || '',
+      observacoes: clienteInicial?.observacoes || ''
     });
+    onClose?.();
   };
 
   return (
@@ -59,9 +83,11 @@ export default function ClienteForm() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <User className="h-5 w-5 mr-2" />
-            Novo Cliente
+            {clienteInicial ? 'Editar Cliente' : 'Novo Cliente'}
           </CardTitle>
-          <CardDescription>Cadastrar um novo cliente no sistema</CardDescription>
+          <CardDescription>
+            {clienteInicial ? 'Editar informações do cliente' : 'Cadastrar um novo cliente no sistema'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
@@ -159,12 +185,12 @@ export default function ClienteForm() {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
+            <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
             <Button 
               onClick={salvarCliente} 
               disabled={createCliente.isPending || !cliente.nome.trim()}
             >
-              {createCliente.isPending ? "Salvando..." : "Salvar Cliente"}
+              {createCliente.isPending ? "Salvando..." : clienteInicial ? "Atualizar Cliente" : "Salvar Cliente"}
             </Button>
           </div>
         </CardContent>

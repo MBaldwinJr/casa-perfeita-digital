@@ -8,21 +8,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Home, MapPin, DollarSign, Bed, Bath, Car } from "lucide-react";
 import { useCreateImovel } from "@/hooks/useSupabaseQuery";
 
-export default function ImovelForm() {
+interface ImovelFormProps {
+  imovel?: any;
+  onClose?: () => void;
+}
+
+export default function ImovelForm({ imovel: imovelInicial, onClose }: ImovelFormProps = {}) {
   const [imovel, setImovel] = useState({
-    titulo: '',
-    tipo: '',
-    endereco: '',
-    cidade: '',
-    estado: '',
-    cep: '',
-    area: '',
-    quartos: '',
-    banheiros: '',
-    vagas: '',
-    valor: '',
-    status: 'disponivel',
-    descricao: ''
+    titulo: imovelInicial?.titulo || '',
+    tipo: imovelInicial?.tipo || '',
+    endereco: imovelInicial?.endereco || '',
+    cidade: imovelInicial?.cidade || '',
+    estado: imovelInicial?.estado || '',
+    cep: imovelInicial?.cep || '',
+    area: imovelInicial?.area?.toString() || '',
+    quartos: imovelInicial?.quartos?.toString() || '',
+    banheiros: imovelInicial?.banheiros?.toString() || '',
+    vagas: imovelInicial?.vagas?.toString() || '',
+    valor: imovelInicial?.valor?.toString() || '',
+    status: imovelInicial?.status || 'disponivel',
+    descricao: imovelInicial?.descricao || ''
   });
 
   const createImovel = useCreateImovel();
@@ -46,24 +51,47 @@ export default function ImovelForm() {
       valor: parseFloat(imovel.valor),
       status: imovel.status,
       descricao: imovel.descricao || undefined,
+    }, {
+      onSuccess: () => {
+        // Reset form
+        setImovel({
+          titulo: '',
+          tipo: '',
+          endereco: '',
+          cidade: '',
+          estado: '',
+          cep: '',
+          area: '',
+          quartos: '',
+          banheiros: '',
+          vagas: '',
+          valor: '',
+          status: 'disponivel',
+          descricao: ''
+        });
+        onClose?.();
+      }
     });
+  };
 
+  const handleCancel = () => {
     // Reset form
     setImovel({
-      titulo: '',
-      tipo: '',
-      endereco: '',
-      cidade: '',
-      estado: '',
-      cep: '',
-      area: '',
-      quartos: '',
-      banheiros: '',
-      vagas: '',
-      valor: '',
-      status: 'disponivel',
-      descricao: ''
+      titulo: imovelInicial?.titulo || '',
+      tipo: imovelInicial?.tipo || '',
+      endereco: imovelInicial?.endereco || '',
+      cidade: imovelInicial?.cidade || '',
+      estado: imovelInicial?.estado || '',
+      cep: imovelInicial?.cep || '',
+      area: imovelInicial?.area?.toString() || '',
+      quartos: imovelInicial?.quartos?.toString() || '',
+      banheiros: imovelInicial?.banheiros?.toString() || '',
+      vagas: imovelInicial?.vagas?.toString() || '',
+      valor: imovelInicial?.valor?.toString() || '',
+      status: imovelInicial?.status || 'disponivel',
+      descricao: imovelInicial?.descricao || ''
     });
+    onClose?.();
   };
 
   return (
@@ -72,9 +100,11 @@ export default function ImovelForm() {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Home className="h-5 w-5 mr-2" />
-            Novo Imóvel
+            {imovelInicial ? 'Editar Imóvel' : 'Novo Imóvel'}
           </CardTitle>
-          <CardDescription>Cadastrar um novo imóvel no sistema</CardDescription>
+          <CardDescription>
+            {imovelInicial ? 'Editar informações do imóvel' : 'Cadastrar um novo imóvel no sistema'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
@@ -215,12 +245,12 @@ export default function ImovelForm() {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
+            <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
             <Button 
               onClick={salvarImovel} 
               disabled={createImovel.isPending || !imovel.titulo.trim() || !imovel.tipo || !imovel.endereco.trim() || !imovel.valor}
             >
-              {createImovel.isPending ? "Salvando..." : "Salvar Imóvel"}
+              {createImovel.isPending ? "Salvando..." : imovelInicial ? "Atualizar Imóvel" : "Salvar Imóvel"}
             </Button>
           </div>
         </CardContent>

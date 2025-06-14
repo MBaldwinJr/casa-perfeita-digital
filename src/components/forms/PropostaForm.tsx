@@ -11,16 +11,21 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useClientes, useImoveis, useCreateProposta } from "@/hooks/useSupabaseQuery";
 
-export default function PropostaForm() {
+interface PropostaFormProps {
+  proposta?: any;
+  onClose?: () => void;
+}
+
+export default function PropostaForm({ proposta: propostaInicial, onClose }: PropostaFormProps = {}) {
   const [proposta, setProposta] = useState({
-    cliente_id: '',
-    imovel_id: '',
-    valor_proposta: '',
-    forma_pagamento: '',
-    entrada: '',
-    financiamento: '',
-    observacoes: '',
-    status: 'em_analise'
+    cliente_id: propostaInicial?.cliente_id || '',
+    imovel_id: propostaInicial?.imovel_id || '',
+    valor_proposta: propostaInicial?.valor_proposta?.toString() || '',
+    forma_pagamento: propostaInicial?.forma_pagamento || '',
+    entrada: propostaInicial?.entrada?.toString() || '',
+    financiamento: propostaInicial?.financiamento?.toString() || '',
+    observacoes: propostaInicial?.observacoes || '',
+    status: propostaInicial?.status || 'em_analise'
   });
 
   const [dataVencimento, setDataVencimento] = useState<Date>();
@@ -46,21 +51,11 @@ export default function PropostaForm() {
       data_assinatura: dataAssinatura?.toISOString().split('T')[0],
       status: proposta.status,
       observacoes: proposta.observacoes || undefined,
+    }, {
+      onSuccess: () => {
+        onClose?.();
+      }
     });
-
-    // Reset form
-    setProposta({
-      cliente_id: '',
-      imovel_id: '',
-      valor_proposta: '',
-      forma_pagamento: '',
-      entrada: '',
-      financiamento: '',
-      observacoes: '',
-      status: 'em_analise'
-    });
-    setDataVencimento(undefined);
-    setDataAssinatura(undefined);
   };
 
   return (
@@ -210,7 +205,7 @@ export default function PropostaForm() {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline">Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
             <Button 
               onClick={salvarProposta}
               disabled={createProposta.isPending || !proposta.cliente_id || !proposta.imovel_id || !proposta.valor_proposta || !proposta.forma_pagamento}

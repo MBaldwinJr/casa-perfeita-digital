@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Calendar, DollarSign, User, Edit, Eye, FileText } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import PropostaForm from "@/components/forms/PropostaForm";
 import { usePropostas } from "@/hooks/useSupabaseQuery";
 
 export default function Propostas() {
   const [showForm, setShowForm] = useState(false);
+  const [selectedProposta, setSelectedProposta] = useState(null);
+  const [viewDetails, setViewDetails] = useState(null);
   const { data: propostas = [], isLoading } = usePropostas();
 
   if (isLoading) {
@@ -57,10 +60,115 @@ export default function Propostas() {
             <DialogHeader>
               <DialogTitle>Criar Nova Proposta</DialogTitle>
             </DialogHeader>
-            <PropostaForm />
+            <PropostaForm 
+              proposta={selectedProposta}
+              onClose={() => {
+                setShowForm(false);
+                setSelectedProposta(null);
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Modal de Detalhes */}
+      <Dialog open={!!viewDetails} onOpenChange={() => setViewDetails(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Proposta</DialogTitle>
+          </DialogHeader>
+          {viewDetails && (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="font-semibold">Cliente</Label>
+                  <p className="text-sm text-muted-foreground">{viewDetails.clientes?.nome || 'Cliente não especificado'}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Imóvel</Label>
+                  <p className="text-sm text-muted-foreground">{viewDetails.imoveis?.titulo || 'Imóvel não especificado'}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Valor da Proposta</Label>
+                  <p className="text-sm text-muted-foreground font-bold text-primary">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(viewDetails.valor_proposta)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Valor do Imóvel</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(viewDetails.imoveis?.valor || 0)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Forma de Pagamento</Label>
+                  <p className="text-sm text-muted-foreground capitalize">{viewDetails.forma_pagamento.replace('_', ' ')}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Status</Label>
+                  <p className="text-sm text-muted-foreground capitalize">{getStatusLabel(viewDetails.status)}</p>
+                </div>
+                {viewDetails.entrada && (
+                  <div>
+                    <Label className="font-semibold">Entrada</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(viewDetails.entrada)}
+                    </p>
+                  </div>
+                )}
+                {viewDetails.financiamento && (
+                  <div>
+                    <Label className="font-semibold">Financiamento</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(viewDetails.financiamento)}
+                    </p>
+                  </div>
+                )}
+                {viewDetails.data_vencimento && (
+                  <div>
+                    <Label className="font-semibold">Data de Vencimento</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(viewDetails.data_vencimento).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+                {viewDetails.data_assinatura && (
+                  <div>
+                    <Label className="font-semibold">Data de Assinatura</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(viewDetails.data_assinatura).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <Label className="font-semibold">Data de Criação</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(viewDetails.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                {viewDetails.observacoes && (
+                  <div className="md:col-span-2">
+                    <Label className="font-semibold">Observações</Label>
+                    <p className="text-sm text-muted-foreground">{viewDetails.observacoes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {propostas.length === 0 ? (
         <Card>
@@ -121,18 +229,30 @@ export default function Propostas() {
                       {new Date(proposta.created_at).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
-                  <div className="flex space-x-2 md:col-span-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver Detalhes
-                    </Button>
-                    <Button size="sm">
-                      Gerar Contrato
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Histórico
-                    </Button>
-                  </div>
+                   <div className="flex space-x-2 md:col-span-2">
+                     <Button 
+                       variant="outline" 
+                       size="sm"
+                       onClick={() => setViewDetails(proposta)}
+                     >
+                       <Eye className="h-4 w-4 mr-1" />
+                       Ver Detalhes
+                     </Button>
+                     <Button size="sm">
+                       Gerar Contrato
+                     </Button>
+                     <Button 
+                       variant="outline" 
+                       size="sm"
+                       onClick={() => {
+                         setSelectedProposta(proposta);
+                         setShowForm(true);
+                       }}
+                     >
+                       <Edit className="h-4 w-4 mr-1" />
+                       Editar
+                     </Button>
+                   </div>
                 </div>
               </CardContent>
             </Card>
