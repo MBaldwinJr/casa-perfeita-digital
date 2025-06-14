@@ -5,19 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, CalendarIcon, FileText, User, Home, DollarSign } from "lucide-react";
+import { CalendarIcon, FileText } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { toast } from "@/hooks/use-toast";
+import { useClientes, useImoveis, useCreateProposta } from "@/hooks/useSupabaseQuery";
 
 export default function PropostaForm() {
   const [proposta, setProposta] = useState({
-    clienteId: '',
-    imovelId: '',
-    valorProposta: '',
-    formaPagamento: '',
+    cliente_id: '',
+    imovel_id: '',
+    valor_proposta: '',
+    forma_pagamento: '',
     entrada: '',
     financiamento: '',
     observacoes: '',
@@ -27,24 +26,41 @@ export default function PropostaForm() {
   const [dataVencimento, setDataVencimento] = useState<Date>();
   const [dataAssinatura, setDataAssinatura] = useState<Date>();
 
-  const clientes = [
-    { id: 1, nome: "João Silva" },
-    { id: 2, nome: "Maria Santos" },
-    { id: 3, nome: "Pedro Oliveira" },
-  ];
-
-  const imoveis = [
-    { id: 1, descricao: "Casa 3 quartos - Centro" },
-    { id: 2, descricao: "Apartamento 2 quartos - Jardins" },
-    { id: 3, descricao: "Terreno 500m² - Vila Nova" },
-  ];
+  const { data: clientes = [], isLoading: clientesLoading } = useClientes();
+  const { data: imoveis = [], isLoading: imoveisLoading } = useImoveis();
+  const createProposta = useCreateProposta();
 
   const salvarProposta = () => {
-    console.log("Proposta salva:", { ...proposta, dataVencimento, dataAssinatura });
-    toast({
-      title: "Proposta salva!",
-      description: "A proposta foi criada com sucesso.",
+    if (!proposta.cliente_id || !proposta.imovel_id || !proposta.valor_proposta || !proposta.forma_pagamento) {
+      return;
+    }
+
+    createProposta.mutate({
+      cliente_id: proposta.cliente_id,
+      imovel_id: proposta.imovel_id,
+      valor_proposta: parseFloat(proposta.valor_proposta),
+      forma_pagamento: proposta.forma_pagamento,
+      entrada: proposta.entrada ? parseFloat(proposta.entrada) : undefined,
+      financiamento: proposta.financiamento ? parseFloat(proposta.financiamento) : undefined,
+      data_vencimento: dataVencimento?.toISOString().split('T')[0],
+      data_assinatura: dataAssinatura?.toISOString().split('T')[0],
+      status: proposta.status,
+      observacoes: proposta.observacoes || undefined,
     });
+
+    // Reset form
+    setProposta({
+      cliente_id: '',
+      imovel_id: '',
+      valor_proposta: '',
+      forma_pagamento: '',
+      entrada: '',
+      financiamento: '',
+      observacoes: '',
+      status: 'em_analise'
+    });
+    setDataVencimento(undefined);
+    setDataAssinatura(undefined);
   };
 
   return (
@@ -61,28 +77,32 @@ export default function PropostaForm() {
           <div className="grid gap-6 md:grid-cols-2">
             <div>
               <Label htmlFor="cliente">Cliente</Label>
-              <Select value={proposta.clienteId} onValueChange={(value) => setProposta({...proposta, clienteId: value})}>
+              <Select value={proposta.cliente_id} onValueChange={(value) => setProposta({...proposta, cliente_id: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o cliente" />
+                  <SelectValue placeholder={clientesLoading ? "Carregando..." : "Selecione o cliente"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">João Silva</SelectItem>
-                  <SelectItem value="2">Maria Santos</SelectItem>
-                  <SelectItem value="3">Pedro Oliveira</SelectItem>
+                  {clientes.map((cliente) => (
+                    <SelectItem key={cliente.id} value={cliente.id}>
+                      {cliente.nome}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label htmlFor="imovel">Imóvel</Label>
-              <Select value={proposta.imovelId} onValueChange={(value) => setProposta({...proposta, imovelId: value})}>
+              <Select value={proposta.imovel_id} onValueChange={(value) => setProposta({...proposta, imovel_id: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o imóvel" />
+                  <SelectValue placeholder={imoveisLoading ? "Carregando..." : "Selecione o imóvel"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Casa 3 quartos - Centro</SelectItem>
-                  <SelectItem value="2">Apartamento 2 quartos - Jardins</SelectItem>
-                  <SelectItem value="3">Terreno 500m² - Vila Nova</SelectItem>
+                  {imoveis.map((imovel) => (
+                    <SelectItem key={imovel.id} value={imovel.id}>
+                      {imovel.titulo} - {imovel.cidade}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -92,14 +112,14 @@ export default function PropostaForm() {
               <Input
                 id="valorProposta"
                 placeholder="R$ 0,00"
-                value={proposta.valorProposta}
-                onChange={(e) => setProposta({...proposta, valorProposta: e.target.value})}
+                value={proposta.valor_proposta}
+                onChange={(e) => setProposta({...proposta, valor_proposta: e.target.value})}
               />
             </div>
 
             <div>
               <Label htmlFor="formaPagamento">Forma de Pagamento</Label>
-              <Select value={proposta.formaPagamento} onValueChange={(value) => setProposta({...proposta, formaPagamento: value})}>
+              <Select value={proposta.forma_pagamento} onValueChange={(value) => setProposta({...proposta, forma_pagamento: value})}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a forma" />
                 </SelectTrigger>
@@ -191,7 +211,12 @@ export default function PropostaForm() {
 
           <div className="flex justify-end space-x-2">
             <Button variant="outline">Cancelar</Button>
-            <Button onClick={salvarProposta}>Salvar Proposta</Button>
+            <Button 
+              onClick={salvarProposta}
+              disabled={createProposta.isPending || !proposta.cliente_id || !proposta.imovel_id || !proposta.valor_proposta || !proposta.forma_pagamento}
+            >
+              {createProposta.isPending ? "Salvando..." : "Salvar Proposta"}
+            </Button>
           </div>
         </CardContent>
       </Card>

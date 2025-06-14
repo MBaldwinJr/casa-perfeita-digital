@@ -9,7 +9,332 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cpf_cnpj: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cpf_cnpj?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contratos: {
+        Row: {
+          created_at: string
+          data_assinatura: string
+          data_vencimento: string | null
+          id: string
+          numero_contrato: string
+          observacoes: string | null
+          proposta_id: string
+          status: string | null
+          updated_at: string
+          user_id: string
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string
+          data_assinatura: string
+          data_vencimento?: string | null
+          id?: string
+          numero_contrato: string
+          observacoes?: string | null
+          proposta_id: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          valor_total: number
+        }
+        Update: {
+          created_at?: string
+          data_assinatura?: string
+          data_vencimento?: string | null
+          id?: string
+          numero_contrato?: string
+          observacoes?: string | null
+          proposta_id?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contratos_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financiamentos: {
+        Row: {
+          banco: string
+          cliente_id: string
+          created_at: string
+          data_aprovacao: string | null
+          entrada: number | null
+          id: string
+          imovel_id: string
+          observacoes: string | null
+          prazo_meses: number | null
+          status: string | null
+          taxa_juros: number | null
+          updated_at: string
+          user_id: string
+          valor_financiado: number
+          valor_parcela: number | null
+        }
+        Insert: {
+          banco: string
+          cliente_id: string
+          created_at?: string
+          data_aprovacao?: string | null
+          entrada?: number | null
+          id?: string
+          imovel_id: string
+          observacoes?: string | null
+          prazo_meses?: number | null
+          status?: string | null
+          taxa_juros?: number | null
+          updated_at?: string
+          user_id: string
+          valor_financiado: number
+          valor_parcela?: number | null
+        }
+        Update: {
+          banco?: string
+          cliente_id?: string
+          created_at?: string
+          data_aprovacao?: string | null
+          entrada?: number | null
+          id?: string
+          imovel_id?: string
+          observacoes?: string | null
+          prazo_meses?: number | null
+          status?: string | null
+          taxa_juros?: number | null
+          updated_at?: string
+          user_id?: string
+          valor_financiado?: number
+          valor_parcela?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financiamentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financiamentos_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imoveis: {
+        Row: {
+          area: number | null
+          banheiros: number | null
+          cep: string | null
+          cidade: string
+          created_at: string
+          descricao: string | null
+          endereco: string
+          estado: string
+          id: string
+          quartos: number | null
+          status: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          vagas: number | null
+          valor: number
+        }
+        Insert: {
+          area?: number | null
+          banheiros?: number | null
+          cep?: string | null
+          cidade: string
+          created_at?: string
+          descricao?: string | null
+          endereco: string
+          estado: string
+          id?: string
+          quartos?: number | null
+          status?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+          vagas?: number | null
+          valor: number
+        }
+        Update: {
+          area?: number | null
+          banheiros?: number | null
+          cep?: string | null
+          cidade?: string
+          created_at?: string
+          descricao?: string | null
+          endereco?: string
+          estado?: string
+          id?: string
+          quartos?: number | null
+          status?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+          vagas?: number | null
+          valor?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          role: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          role?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          role?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      propostas: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          data_assinatura: string | null
+          data_vencimento: string | null
+          entrada: number | null
+          financiamento: number | null
+          forma_pagamento: string
+          id: string
+          imovel_id: string
+          observacoes: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          valor_proposta: number
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          data_assinatura?: string | null
+          data_vencimento?: string | null
+          entrada?: number | null
+          financiamento?: number | null
+          forma_pagamento: string
+          id?: string
+          imovel_id: string
+          observacoes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          valor_proposta: number
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          data_assinatura?: string | null
+          data_vencimento?: string | null
+          entrada?: number | null
+          financiamento?: number | null
+          forma_pagamento?: string
+          id?: string
+          imovel_id?: string
+          observacoes?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_proposta?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propostas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propostas_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

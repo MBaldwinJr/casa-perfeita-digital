@@ -2,8 +2,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Users, FileText, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
+import { useClientes, useImoveis, usePropostas, useFinanciamentos } from "@/hooks/useSupabaseQuery";
 
 export default function Dashboard() {
+  const { data: clientes = [] } = useClientes();
+  const { data: imoveis = [] } = useImoveis();
+  const { data: propostas = [] } = usePropostas();
+  const { data: financiamentos = [] } = useFinanciamentos();
+
+  const imoveisDisponiveis = imoveis.filter(i => i.status === 'disponivel').length;
+  const propostasPendentes = propostas.filter(p => p.status === 'em_analise').length;
+  const vendasMes = propostas
+    .filter(p => p.status === 'aprovada' && new Date(p.created_at).getMonth() === new Date().getMonth())
+    .reduce((total, p) => total + p.valor_proposta, 0);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -24,8 +36,8 @@ export default function Dashboard() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">245</div>
-            <p className="text-xs text-muted-foreground">+12% desde o mês passado</p>
+            <div className="text-2xl font-bold">{imoveis.length}</div>
+            <p className="text-xs text-muted-foreground">{imoveisDisponiveis} disponíveis</p>
           </CardContent>
         </Card>
 
@@ -35,8 +47,8 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">189</div>
-            <p className="text-xs text-muted-foreground">+8% desde o mês passado</p>
+            <div className="text-2xl font-bold">{clientes.length}</div>
+            <p className="text-xs text-muted-foreground">Total de clientes cadastrados</p>
           </CardContent>
         </Card>
 
@@ -46,8 +58,8 @@ export default function Dashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-muted-foreground">-5% desde o mês passado</p>
+            <div className="text-2xl font-bold">{propostasPendentes}</div>
+            <p className="text-xs text-muted-foreground">Aguardando análise</p>
           </CardContent>
         </Card>
 
@@ -57,8 +69,13 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 2.4M</div>
-            <p className="text-xs text-muted-foreground">+18% desde o mês passado</p>
+            <div className="text-2xl font-bold">
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+              }).format(vendasMes)}
+            </div>
+            <p className="text-xs text-muted-foreground">Vendas aprovadas este mês</p>
           </CardContent>
         </Card>
       </div>

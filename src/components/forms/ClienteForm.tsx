@@ -1,76 +1,57 @@
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X, Calculator } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { User, Phone, Mail, FileText, MapPin } from "lucide-react";
+import { useCreateCliente } from "@/hooks/useSupabaseQuery";
 
-const clienteSchema = z.object({
-  nome: z.string().min(1, "Nome é obrigatório"),
-  cpf: z.string().min(11, "CPF deve ter 11 dígitos"),
-  rg: z.string().min(1, "RG é obrigatório"),
-  email: z.string().email("Email inválido"),
-  telefone: z.string().min(1, "Telefone é obrigatório"),
-  endereco: z.string().min(1, "Endereço é obrigatório"),
-  cidade: z.string().min(1, "Cidade é obrigatória"),
-  cep: z.string().min(8, "CEP deve ter 8 dígitos"),
-  estadoCivil: z.string().min(1, "Estado civil é obrigatório"),
-  profissao: z.string().min(1, "Profissão é obrigatória"),
-  renda: z.string().min(1, "Renda é obrigatória"),
-  interesse: z.string().min(1, "Interesse é obrigatório"),
-  orcamento: z.string().min(1, "Orçamento é obrigatório"),
-  observacoes: z.string().optional(),
-});
-
-type ClienteFormData = z.infer<typeof clienteSchema>;
-
-interface ClienteFormProps {
-  onClose: () => void;
-}
-
-export function ClienteForm({ onClose }: ClienteFormProps) {
-  const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
-  const [showSimulacao, setShowSimulacao] = React.useState(false);
-  const [resultadoSimulacao, setResultadoSimulacao] = React.useState<any>(null);
-  
-  const form = useForm<ClienteFormData>({
-    resolver: zodResolver(clienteSchema),
-    defaultValues: {
-      nome: "",
-      cpf: "",
-      rg: "",
-      email: "",
-      telefone: "",
-      endereco: "",
-      cidade: "",
-      cep: "",
-      estadoCivil: "",
-      profissao: "",
-      renda: "",
-      interesse: "",
-      orcamento: "",
-      observacoes: "",
-    },
+export default function ClienteForm() {
+  const [cliente, setCliente] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    cpf_cnpj: '',
+    endereco: '',
+    cidade: '',
+    estado: '',
+    cep: '',
+    observacoes: ''
   });
 
-  const onSubmit = (data: ClienteFormData) => {
-    console.log("Dados do cliente:", data);
-    console.log("Arquivos enviados:", uploadedFiles);
-    
-    toast({
-      title: "Cliente cadastrado com sucesso!",
-      description: `${data.nome} foi adicionado ao sistema.`,
+  const createCliente = useCreateCliente();
+
+  const salvarCliente = () => {
+    if (!cliente.nome.trim()) {
+      return;
+    }
+
+    createCliente.mutate({
+      nome: cliente.nome,
+      email: cliente.email || undefined,
+      telefone: cliente.telefone || undefined,
+      cpf_cnpj: cliente.cpf_cnpj || undefined,
+      endereco: cliente.endereco || undefined,
+      cidade: cliente.cidade || undefined,
+      estado: cliente.estado || undefined,
+      cep: cliente.cep || undefined,
+      observacoes: cliente.observacoes || undefined,
     });
-    
-    onClose();
+
+    // Reset form
+    setCliente({
+      nome: '',
+      email: '',
+      telefone: '',
+      cpf_cnpj: '',
+      endereco: '',
+      cidade: '',
+      estado: '',
+      cep: '',
+      observacoes: ''
+    });
   };
 
   const calcularCapacidadePagamento = () => {
