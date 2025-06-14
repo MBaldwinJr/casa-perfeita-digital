@@ -1,30 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Calculator, 
-  Building, 
-  CreditCard, 
-  AlertTriangle,
-  CheckCircle,
-  RefreshCw,
-  BarChart3,
-  Target,
-  Plus,
-  Eye,
-  Edit,
-  Calendar,
-  DollarSign,
-  User
+  RefreshCw, Plus, Eye, Edit, Calendar, DollarSign, Building, CreditCard,
+  TrendingUp, TrendingDown, Calculator, AlertTriangle, CheckCircle, Target, BarChart3
 } from "lucide-react";
 import FinanciamentoForm from "@/components/forms/FinanciamentoForm";
 import { useFinanciamentos, useClientes, useImoveis } from "@/hooks/useSupabaseQuery";
