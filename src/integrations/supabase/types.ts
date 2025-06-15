@@ -53,6 +53,7 @@ export type Database = {
       }
       analises_juridicas: {
         Row: {
+          arquivos_anexos: string[] | null
           cliente_id: string | null
           created_at: string
           id: string
@@ -63,11 +64,13 @@ export type Database = {
           responsavel: string
           resultado: string | null
           status: string
+          tags: string[] | null
           tipo: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          arquivos_anexos?: string[] | null
           cliente_id?: string | null
           created_at?: string
           id?: string
@@ -78,11 +81,13 @@ export type Database = {
           responsavel: string
           resultado?: string | null
           status?: string
+          tags?: string[] | null
           tipo: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          arquivos_anexos?: string[] | null
           cliente_id?: string | null
           created_at?: string
           id?: string
@@ -93,6 +98,7 @@ export type Database = {
           responsavel?: string
           resultado?: string | null
           status?: string
+          tags?: string[] | null
           tipo?: string
           updated_at?: string
           user_id?: string
@@ -373,6 +379,39 @@ export type Database = {
           },
         ]
       }
+      historico_atividades: {
+        Row: {
+          acao: string
+          created_at: string
+          descricao: string
+          entidade_id: string
+          entidade_tipo: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          descricao: string
+          entidade_id: string
+          entidade_tipo: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          descricao?: string
+          entidade_id?: string
+          entidade_tipo?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       imoveis: {
         Row: {
           area: number | null
@@ -436,6 +475,7 @@ export type Database = {
       processos_juridicos: {
         Row: {
           advogado_responsavel: string
+          arquivos_anexos: string[] | null
           cliente_id: string | null
           created_at: string
           data_conclusao: string | null
@@ -447,6 +487,7 @@ export type Database = {
           numero_processo: string | null
           observacoes: string | null
           status: string
+          tags: string[] | null
           tipo: string
           updated_at: string
           user_id: string
@@ -455,6 +496,7 @@ export type Database = {
         }
         Insert: {
           advogado_responsavel: string
+          arquivos_anexos?: string[] | null
           cliente_id?: string | null
           created_at?: string
           data_conclusao?: string | null
@@ -466,6 +508,7 @@ export type Database = {
           numero_processo?: string | null
           observacoes?: string | null
           status?: string
+          tags?: string[] | null
           tipo: string
           updated_at?: string
           user_id: string
@@ -474,6 +517,7 @@ export type Database = {
         }
         Update: {
           advogado_responsavel?: string
+          arquivos_anexos?: string[] | null
           cliente_id?: string | null
           created_at?: string
           data_conclusao?: string | null
@@ -485,6 +529,7 @@ export type Database = {
           numero_processo?: string | null
           observacoes?: string | null
           status?: string
+          tags?: string[] | null
           tipo?: string
           updated_at?: string
           user_id?: string

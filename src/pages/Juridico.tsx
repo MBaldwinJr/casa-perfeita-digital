@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,9 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Scale, AlertTriangle, CheckCircle, FileText, Clock, Eye, Plus, BarChart3 } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 import DocumentManager from "@/components/juridico/DocumentManager";
 import ProcessManager from "@/components/juridico/ProcessManager";
+import JuridicoOverview from "@/components/juridico/JuridicoOverview";
+import JuridicoCalendar from "@/components/juridico/JuridicoCalendar";
+import JuridicoFilters, { JuridicoFiltersState } from "@/components/juridico/JuridicoFilters";
 import { useToast } from "@/hooks/use-toast";
 import { 
   useAlertasJuridicos, 
@@ -21,7 +23,8 @@ import {
   useCreateAnalise, 
   useUpdateAlertaStatus,
   useClientes,
-  useImoveis
+  useImoveis,
+  AlertaJuridico
 } from "@/hooks/useSupabaseQuery";
 
 export default function Juridico() {
@@ -31,7 +34,21 @@ export default function Juridico() {
   const [activeTab, setActiveTab] = useState('overview');
   const [showNovaAnaliseDialog, setShowNovaAnaliseDialog] = useState(false);
   const [showAlertDialog, setShowAlertDialog] = useState(false);
-  const [selectedAlert, setSelectedAlert] = useState<any>(null);
+  const [selectedAlert, setSelectedAlert] = useState<AlertaJuridico | null>(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Filtros
+  const [filters, setFilters] = useState<JuridicoFiltersState>({
+    search: '',
+    status: '',
+    tipo: '',
+    prioridade: '',
+    responsavel: '',
+    dataInicio: '',
+    dataFim: '',
+    tags: []
+  });
+
   const [formData, setFormData] = useState({
     cliente_id: '',
     imovel_id: '',
@@ -56,21 +73,47 @@ export default function Juridico() {
   // Loading state
   const isLoading = loadingAlertas || loadingAnalises || loadingProcessos || loadingDocumentos;
 
-  // Calcular estatísticas reais
-  const estatisticas = {
-    processosAtivos: processos.filter(p => p.status === 'ativo').length,
-    documentosValidos: documentos.length > 0 ? Math.round((documentos.filter(d => d.status === 'valido').length / documentos.length) * 100) : 0,
-    alertasAtivos: alertas.length,
-    processosConcluidos: processos.filter(p => p.status === 'finalizado').length,
-    prazosVencidos: documentos.filter(d => d.data_vencimento && new Date(d.data_vencimento) < new Date()).length,
-    certificacoesOk: documentos.length > 0 ? Math.round((documentos.filter(d => d.status === 'valido').length / documentos.length) * 100) : 0
+  // Funções de filtro
+  const handleFiltersChange = (newFilters: Partial<JuridicoFiltersState>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
   };
+
+  const handleClearFilters = () => {
+    setFilters({
+      search: '',
+      status: '',
+      tipo: '',
+      prioridade: '',
+      responsavel: '',
+      dataInicio: '',
+      dataFim: '',
+      tags: []
+    });
+  };
+
+  // Aplicar filtros aos dados
+  const filteredAnalises = analises.filter(analise => {
+    if (filters.search && !analise.tipo.toLowerCase().includes(filters.search.toLowerCase()) && 
+        !analise.responsavel.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if (filters.status && analise.status !== filters.status) return false;
+    if (filters.tipo && analise.tipo !== filters.tipo) return false;
+    if (filters.prioridade && analise.prioridade !== filters.prioridade) return false;
+    if (filters.responsavel && analise.responsavel !== filters.responsavel) return false;
+    return true;
+  });
+
+  const filteredProcessos = processos.filter(processo => {
+    if (filters.search && !processo.tipo.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !processo.advogado_responsavel.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if (filters.status && processo.status !== filters.status) return false;
+    return true;
+  });
 
   const handleNovaAnalise = () => {
     setShowNovaAnaliseDialog(true);
   };
 
-  const handleVerAlerta = (alerta: any) => {
+  const handleVerAlerta = (alerta: AlertaJuridico) => {
     setSelectedAlert(alerta);
     setShowAlertDialog(true);
   };
@@ -135,15 +178,6 @@ export default function Juridico() {
     }
   };
 
-  const getCorPorTipo = (tipo: string) => {
-    switch (tipo) {
-      case 'urgente': return 'bg-red-500';
-      case 'atencao': return 'bg-yellow-500';
-      case 'info': return 'bg-blue-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -165,145 +199,33 @@ export default function Juridico() {
         </Button>
       </div>
 
+      {/* Filtros */}
+      {(activeTab === 'processos' || activeTab === 'documentos') && (
+        <JuridicoFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={handleClearFilters}
+          showAdvanced={showAdvancedFilters}
+          onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
+        />
+      )}
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="processos">Processos</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="calendario">Calendário</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Estatísticas Gerais */}
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Processos Ativos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{estatisticas.processosAtivos}</div>
-                <p className="text-xs text-muted-foreground">+2 esta semana</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Documentos Válidos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{estatisticas.documentosValidos}%</div>
-                <p className="text-xs text-muted-foreground">3 documentos vencidos</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Alertas Ativos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{estatisticas.alertasAtivos}</div>
-                <p className="text-xs text-muted-foreground">2 urgentes</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Concluídos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{estatisticas.processosConcluidos}</div>
-                <p className="text-xs text-muted-foreground">este mês</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Prazos Vencidos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{estatisticas.prazosVencidos}</div>
-                <p className="text-xs text-muted-foreground">requer ação</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Certificações</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{estatisticas.certificacoesOk}%</div>
-                <p className="text-xs text-muted-foreground">conformidade</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Alertas Jurídicos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                Alertas Jurídicos
-              </CardTitle>
-              <CardDescription>Pendências que requerem atenção imediata</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {alertas.length > 0 ? (
-                  alertas.map((alerta) => (
-                    <div key={alerta.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                      <Badge className={`${getCorPorTipo(alerta.tipo)} text-white`}>
-                        {alerta.tipo.charAt(0).toUpperCase() + alerta.tipo.slice(1)}
-                      </Badge>
-                      <span className="flex-1">{alerta.mensagem}</span>
-                      <Button size="sm" variant="outline" onClick={() => handleVerAlerta(alerta)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-center py-4">Nenhum alerta ativo no momento</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Dashboard de Produtividade */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BarChart3 className="h-5 w-5 mr-2" />
-                Resumo de Produtividade
-              </CardTitle>
-              <CardDescription>Performance do setor jurídico nos últimos 30 dias</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-4">
-                  <div className="border-l-4 border-green-500 pl-4">
-                    <h4 className="font-semibold text-green-700">Processos Finalizados</h4>
-                    <p className="text-2xl font-bold text-green-600">24</p>
-                    <p className="text-sm text-muted-foreground">+20% vs mês anterior</p>
-                  </div>
-                  <div className="border-l-4 border-blue-500 pl-4">
-                    <h4 className="font-semibold text-blue-700">Tempo Médio de Processo</h4>
-                    <p className="text-2xl font-bold text-blue-600">45 dias</p>
-                    <p className="text-sm text-muted-foreground">-5 dias vs mês anterior</p>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="border-l-4 border-yellow-500 pl-4">
-                    <h4 className="font-semibold text-yellow-700">Documentos Processados</h4>
-                    <p className="text-2xl font-bold text-yellow-600">156</p>
-                    <p className="text-sm text-muted-foreground">+12% vs mês anterior</p>
-                  </div>
-                  <div className="border-l-4 border-purple-500 pl-4">
-                    <h4 className="font-semibold text-purple-700">Taxa de Aprovação</h4>
-                    <p className="text-2xl font-bold text-purple-600">94%</p>
-                    <p className="text-sm text-muted-foreground">+2% vs mês anterior</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <JuridicoOverview
+            alertas={alertas}
+            analises={analises}
+            processos={processos}
+            documentos={documentos}
+            onVerAlerta={handleVerAlerta}
+          />
         </TabsContent>
 
         <TabsContent value="processos">
@@ -312,6 +234,14 @@ export default function Juridico() {
 
         <TabsContent value="documentos">
           <DocumentManager />
+        </TabsContent>
+
+        <TabsContent value="calendario">
+          <JuridicoCalendar
+            analises={analises}
+            processos={processos}
+            documentos={documentos}
+          />
         </TabsContent>
       </Tabs>
 
@@ -435,7 +365,7 @@ export default function Juridico() {
             <div className="space-y-4">
               <div>
                 <Label className="font-semibold">Tipo</Label>
-                <Badge className={`${getCorPorTipo(selectedAlert.tipo)} text-white ml-2`}>
+                <Badge className={`${selectedAlert.tipo === 'urgente' ? 'bg-red-500' : selectedAlert.tipo === 'atencao' ? 'bg-yellow-500' : 'bg-blue-500'} text-white ml-2`}>
                   {selectedAlert.tipo.charAt(0).toUpperCase() + selectedAlert.tipo.slice(1)}
                 </Badge>
               </div>
