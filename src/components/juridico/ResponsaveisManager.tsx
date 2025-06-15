@@ -51,7 +51,7 @@ export default function ResponsaveisManager() {
           ...formData
         });
       } else {
-        await createResponsavel.mutateAsync(formData);
+        await createResponsavel.mutateAsync({ ...formData, ativo: true });
       }
       
       setShowDialog(false);

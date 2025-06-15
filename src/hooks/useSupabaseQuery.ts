@@ -148,6 +148,19 @@ export interface AlertaJuridico {
   updated_at: string;
 }
 
+export interface ResponsavelJuridico {
+  id: string;
+  user_id: string;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  oab?: string;
+  especializacao?: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Hooks for fetching data
 export const useClientes = () => {
   const { user } = useAuth();
@@ -587,6 +600,92 @@ export const useUpdateAlertaStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['alertas'] });
+    },
+  });
+};
+
+export const useResponsaveis = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['responsaveis', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('responsaveis_juridicos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as ResponsavelJuridico[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useCreateResponsavel = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (responsavel: Omit<ResponsavelJuridico, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('responsaveis_juridicos')
+        .insert([{ ...responsavel, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['responsaveis'] });
+      toast({
+        title: "Responsável criado!",
+        description: "Responsável foi adicionado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar responsável",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useUpdateResponsavel = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updateData }: Partial<ResponsavelJuridico> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('responsaveis_juridicos')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['responsaveis'] });
+      toast({
+        title: "Responsável atualizado!",
+        description: "Dados foram atualizados com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar responsável",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 };
