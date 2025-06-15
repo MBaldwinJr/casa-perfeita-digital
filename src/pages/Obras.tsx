@@ -579,7 +579,13 @@ export default function Obras() {
           dataInicioObra={selectedObra?.data_inicio || ''}
           cronogramas={cronogramas as any}
           open={showCronogramaModal}
-          onOpenChange={setShowCronogramaModal}
+          onOpenChange={(open) => {
+            setShowCronogramaModal(open);
+            if (!open) {
+              // Recarregar dados quando fechar o modal
+              window.location.reload();
+            }
+          }}
         />
 
         <LicencasModal
