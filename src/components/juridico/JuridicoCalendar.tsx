@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, CalendarIcon, Clock } from "lucide-react";
 import { format, parseISO, isToday, isTomorrow, isThisWeek, addDays } from 'date-fns';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 import { AnaliseJuridica, ProcessoJuridico, DocumentoJuridico } from "@/hooks/useSupabaseQuery";
 
@@ -23,6 +30,9 @@ interface PrazoItem {
 
 export default function JuridicoCalendar({ analises, processos, documentos }: JuridicoCalendarProps) {
   const [visaoAtual, setVisaoAtual] = useState<'hoje' | 'semana' | 'mes'>('semana');
+  const [analiseSelected, setAnaliseSelected] = useState<AnaliseJuridica | null>(null);
+  const [formData, setFormData] = useState({ status: '', resultado: '' });
+  const { toast } = useToast();
 
   // Consolidar todos os prazos
   const prazos: PrazoItem[] = React.useMemo(() => {
@@ -114,6 +124,46 @@ export default function JuridicoCalendar({ analises, processos, documentos }: Ju
     return { texto: format(data, 'dd/MM'), cor: 'text-muted-foreground' };
   };
 
+  const handleClickAnalise = (prazoId: string, tipo: string) => {
+    if (tipo === 'analise') {
+      const analise = analises.find(a => a.id === prazoId);
+      if (analise) {
+        setAnaliseSelected(analise);
+        setFormData({ status: analise.status, resultado: analise.resultado || '' });
+      }
+    }
+  };
+
+  const handleUpdateAnalise = async () => {
+    if (!analiseSelected) return;
+
+    try {
+      const { error } = await supabase
+        .from('analises_juridicas')
+        .update({
+          status: formData.status as any,
+          resultado: formData.resultado
+        })
+        .eq('id', analiseSelected.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Análise atualizada!",
+        description: "Status e resultado foram salvos com sucesso.",
+      });
+
+      setAnaliseSelected(null);
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar análise",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -150,7 +200,8 @@ export default function JuridicoCalendar({ analises, processos, documentos }: Ju
               return (
                 <div 
                   key={prazo.id} 
-                  className={`p-3 border-l-4 ${getCorPorPrioridade(prazo.prioridade)} bg-muted/30 rounded-r-lg hover:bg-muted/50 transition-colors`}
+                  className={`p-3 border-l-4 ${getCorPorPrioridade(prazo.prioridade)} bg-muted/30 rounded-r-lg hover:bg-muted/50 transition-colors ${prazo.tipo === 'analise' ? 'cursor-pointer' : ''}`}
+                  onClick={() => handleClickAnalise(prazo.id, prazo.tipo)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -185,6 +236,74 @@ export default function JuridicoCalendar({ analises, processos, documentos }: Ju
           )}
         </div>
       </CardContent>
+
+      {/* Modal de Análise */}
+      <Dialog open={!!analiseSelected} onOpenChange={() => setAnaliseSelected(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Dar Seguimento à Análise</DialogTitle>
+          </DialogHeader>
+          {analiseSelected && (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="font-semibold">Tipo de Análise</Label>
+                  <p className="text-sm text-muted-foreground">{analiseSelected.tipo}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Prioridade</Label>
+                  <Badge variant="outline">{analiseSelected.prioridade}</Badge>
+                </div>
+                <div>
+                  <Label className="font-semibold">Responsável</Label>
+                  <p className="text-sm text-muted-foreground">{analiseSelected.responsavel}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Prazo</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {analiseSelected.prazo_conclusao ? format(parseISO(analiseSelected.prazo_conclusao), 'dd/MM/yyyy') : 'N/A'}
+                  </p>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="status">Status *</Label>
+                <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                    <SelectItem value="concluida">Concluída</SelectItem>
+                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="resultado">Resultado/Observações</Label>
+                <Textarea 
+                  id="resultado" 
+                  placeholder="Descreva o resultado da análise ou observações..."
+                  value={formData.resultado}
+                  onChange={(e) => setFormData(prev => ({ ...prev, resultado: e.target.value }))}
+                  rows={4}
+                />
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button onClick={handleUpdateAnalise} className="flex-1">
+                  Salvar Alterações
+                </Button>
+                <Button variant="outline" onClick={() => setAnaliseSelected(null)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
