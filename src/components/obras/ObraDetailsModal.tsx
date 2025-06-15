@@ -20,6 +20,7 @@ interface ObraDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenCronograma: () => void;
+  onOpenLicencas: () => void;
   onOpenFotos: () => void;
 }
 
@@ -31,6 +32,7 @@ export function ObraDetailsModal({
   open, 
   onOpenChange,
   onOpenCronograma,
+  onOpenLicencas,
   onOpenFotos 
 }: ObraDetailsModalProps) {
   if (!obra) return null;
@@ -195,7 +197,7 @@ export function ObraDetailsModal({
               Visualizar Fotos
             </Button>
             
-            <Button variant="outline" className="flex-1 min-w-40">
+            <Button onClick={onOpenLicencas} variant="outline" className="flex-1 min-w-40">
               <FileText className="h-4 w-4 mr-2" />
               Gerenciar Licenças
             </Button>

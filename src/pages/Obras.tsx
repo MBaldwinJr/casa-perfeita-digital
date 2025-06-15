@@ -552,6 +552,10 @@ export default function Obras() {
             setShowDetailsModal(false);
             setShowCronogramaModal(true);
           }}
+          onOpenLicencas={() => {
+            setShowDetailsModal(false);
+            setShowLicencasModal(true);
+          }}
           onOpenFotos={() => {
             setShowDetailsModal(false);
             setShowFotosModal(true);
