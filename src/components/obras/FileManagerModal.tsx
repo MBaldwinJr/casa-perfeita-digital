@@ -55,7 +55,7 @@ export function FileManagerModal({ obra, open, onOpenChange }: FileManagerModalP
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState('');
   const [uploadDescription, setUploadDescription] = useState('');
@@ -212,7 +212,7 @@ export function FileManagerModal({ obra, open, onOpenChange }: FileManagerModalP
   const filteredFiles = files.filter(file => {
     const matchesSearch = file.nome_original.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (file.descricao && file.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = !selectedCategory || file.categoria === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || file.categoria === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -266,7 +266,7 @@ export function FileManagerModal({ obra, open, onOpenChange }: FileManagerModalP
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat} value={cat}>
                       {cat.charAt(0).toUpperCase() + cat.slice(1)}
