@@ -256,7 +256,7 @@ export default function Juridico() {
                     <SelectValue placeholder="Selecione o cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clientes.map((cliente) => (
+                    {clientes.filter(cliente => cliente.id && cliente.id.trim() !== '').map((cliente) => (
                       <SelectItem key={cliente.id} value={cliente.id}>
                         {cliente.nome}
                       </SelectItem>
@@ -271,7 +271,7 @@ export default function Juridico() {
                     <SelectValue placeholder="Selecione o imóvel" />
                   </SelectTrigger>
                   <SelectContent>
-                    {imoveis.map((imovel) => (
+                    {imoveis.filter(imovel => imovel.id && imovel.id.trim() !== '').map((imovel) => (
                       <SelectItem key={imovel.id} value={imovel.id}>
                         {imovel.titulo} - {imovel.endereco}
                       </SelectItem>
