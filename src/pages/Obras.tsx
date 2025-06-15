@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useObras, useCreateObra, useCronogramasObra, useLicencasObra, useFotosObra } from "@/hooks/useSupabaseQuery";
 import { ObraDetailsModal } from "@/components/obras/ObraDetailsModal";
 import { CronogramaModal } from "@/components/obras/CronogramaModal";
+import { LicencasModal } from "@/components/obras/LicencasModal";
 import { FotosModal } from "@/components/obras/FotosModal";
 import { Tables } from "@/integrations/supabase/types";
 
@@ -26,6 +27,7 @@ export default function Obras() {
   const [showNovaObraDialog, setShowNovaObraDialog] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showCronogramaModal, setShowCronogramaModal] = useState(false);
+  const [showLicencasModal, setShowLicencasModal] = useState(false);
   const [showFotosModal, setShowFotosModal] = useState(false);
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
   const [formData, setFormData] = useState({
@@ -72,6 +74,11 @@ export default function Obras() {
   const handleOpenFotos = (obra: Obra) => {
     setSelectedObra(obra);
     setShowFotosModal(true);
+  };
+
+  const handleOpenLicencas = (obra: Obra) => {
+    setSelectedObra(obra);
+    setShowLicencasModal(true);
   };
 
   const handleCriarObra = async () => {
@@ -268,15 +275,19 @@ export default function Obras() {
                   
                    <div className="flex justify-between items-center mt-3">
                      <div className="flex space-x-2">
-                        <Button size="sm" variant="outline" onClick={() => handleOpenCronograma(obra as any)}>
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Cronograma
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleOpenFotos(obra as any)}>
-                          <Camera className="h-4 w-4 mr-1" />
-                          Fotos
-                        </Button>
-                      </div>
+                         <Button size="sm" variant="outline" onClick={() => handleOpenCronograma(obra as any)}>
+                           <Calendar className="h-4 w-4 mr-1" />
+                           Cronograma
+                         </Button>
+                         <Button size="sm" variant="outline" onClick={() => handleOpenLicencas(obra as any)}>
+                           <FileText className="h-4 w-4 mr-1" />
+                           Licenças
+                         </Button>
+                         <Button size="sm" variant="outline" onClick={() => handleOpenFotos(obra as any)}>
+                           <Camera className="h-4 w-4 mr-1" />
+                           Fotos
+                         </Button>
+                       </div>
                       <Button size="sm" onClick={() => handleViewDetails(obra as any)}>Ver Detalhes</Button>
                    </div>
                 </div>
@@ -554,6 +565,14 @@ export default function Obras() {
           cronogramas={cronogramas as any}
           open={showCronogramaModal}
           onOpenChange={setShowCronogramaModal}
+        />
+
+        <LicencasModal
+          obraId={selectedObraId}
+          obraNome={selectedObra?.nome || ''}
+          licencas={licencas as any}
+          open={showLicencasModal}
+          onOpenChange={setShowLicencasModal}
         />
 
         <FotosModal

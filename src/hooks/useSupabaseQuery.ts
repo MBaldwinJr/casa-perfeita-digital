@@ -999,6 +999,68 @@ export const useCreateLicencaObra = () => {
   });
 };
 
+export const useUpdateLicencaObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updateData }: Partial<LicencaObra> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('licencas_obras')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['licencas', data.obra_id] });
+      toast({
+        title: "Licença atualizada!",
+        description: "Licença foi atualizada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar licença",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useDeleteLicencaObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, obraId }: { id: string; obraId: string }) => {
+      const { error } = await supabase
+        .from('licencas_obras')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      return { id, obraId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['licencas', data.obraId] });
+      toast({
+        title: "Licença removida!",
+        description: "Licença foi removida com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao remover licença",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 export const useCreateFotoObra = () => {
   const queryClient = useQueryClient();
 
