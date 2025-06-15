@@ -161,6 +161,71 @@ export interface ResponsavelJuridico {
   updated_at: string;
 }
 
+export interface Obra {
+  id: string;
+  user_id: string;
+  nome: string;
+  endereco: string;
+  descricao?: string;
+  data_inicio: string;
+  data_previsao_fim?: string;
+  data_conclusao?: string;
+  valor_orcamento?: number;
+  valor_gasto: number;
+  progresso_percentual: number;
+  status: 'planejamento' | 'fundacao' | 'estrutura' | 'alvenaria' | 'cobertura' | 'instalacoes' | 'acabamento' | 'concluida' | 'pausada';
+  responsavel_tecnico?: string;
+  cnpj_responsavel?: string;
+  observacoes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CronogramaObra {
+  id: string;
+  obra_id: string;
+  etapa: string;
+  descricao?: string;
+  data_inicio_prevista: string;
+  data_fim_prevista: string;
+  data_inicio_real?: string;
+  data_fim_real?: string;
+  status: 'pendente' | 'em_andamento' | 'concluida' | 'atrasada';
+  ordem_execucao: number;
+  observacoes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LicencaObra {
+  id: string;
+  obra_id: string;
+  nome: string;
+  tipo: string;
+  numero_licenca?: string;
+  orgao_emissor?: string;
+  data_emissao?: string;
+  data_vencimento?: string;
+  status: 'pendente' | 'aprovada' | 'vencida' | 'renovacao' | 'negada';
+  arquivo_url?: string;
+  observacoes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FotoObra {
+  id: string;
+  obra_id: string;
+  cronograma_id?: string;
+  titulo?: string;
+  descricao?: string;
+  arquivo_url: string;
+  data_foto: string;
+  etapa?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Hooks for fetching data
 export const useClientes = () => {
   const { user } = useAuth();
@@ -683,6 +748,249 @@ export const useUpdateResponsavel = () => {
     onError: (error: any) => {
       toast({
         title: "Erro ao atualizar responsável",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Hooks para Obras
+export const useObras = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['obras', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('obras')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Obra[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useCronogramasObra = (obraId: string) => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['cronogramas', obraId],
+    queryFn: async () => {
+      if (!user || !obraId) return [];
+      
+      const { data, error } = await supabase
+        .from('cronograma_obras')
+        .select('*')
+        .eq('obra_id', obraId)
+        .order('ordem_execucao', { ascending: true });
+      
+      if (error) throw error;
+      return data as CronogramaObra[];
+    },
+    enabled: !!user && !!obraId,
+  });
+};
+
+export const useLicencasObra = (obraId: string) => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['licencas', obraId],
+    queryFn: async () => {
+      if (!user || !obraId) return [];
+      
+      const { data, error } = await supabase
+        .from('licencas_obras')
+        .select('*')
+        .eq('obra_id', obraId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as LicencaObra[];
+    },
+    enabled: !!user && !!obraId,
+  });
+};
+
+export const useFotosObra = (obraId: string) => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['fotos', obraId],
+    queryFn: async () => {
+      if (!user || !obraId) return [];
+      
+      const { data, error } = await supabase
+        .from('fotos_obras')
+        .select('*')
+        .eq('obra_id', obraId)
+        .order('data_foto', { ascending: false });
+      
+      if (error) throw error;
+      return data as FotoObra[];
+    },
+    enabled: !!user && !!obraId,
+  });
+};
+
+export const useCreateObra = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (obra: Omit<Obra, 'id' | 'created_at' | 'updated_at' | 'user_id'>) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('obras')
+        .insert([{ ...obra, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['obras'] });
+      toast({
+        title: "Obra criada!",
+        description: "Obra foi adicionada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar obra",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useUpdateObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updateData }: Partial<Obra> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('obras')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['obras'] });
+      toast({
+        title: "Obra atualizada!",
+        description: "Dados foram atualizados com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar obra",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useCreateCronogramaObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (cronograma: Omit<CronogramaObra, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('cronograma_obras')
+        .insert([cronograma])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['cronogramas', data.obra_id] });
+      toast({
+        title: "Cronograma criado!",
+        description: "Etapa foi adicionada ao cronograma.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar cronograma",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useCreateLicencaObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (licenca: Omit<LicencaObra, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('licencas_obras')
+        .insert([licenca])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['licencas', data.obra_id] });
+      toast({
+        title: "Licença criada!",
+        description: "Licença foi adicionada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar licença",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useCreateFotoObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (foto: Omit<FotoObra, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('fotos_obras')
+        .insert([foto])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['fotos', data.obra_id] });
+      toast({
+        title: "Foto adicionada!",
+        description: "Foto foi adicionada à obra.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao adicionar foto",
         description: error.message,
         variant: "destructive",
       });

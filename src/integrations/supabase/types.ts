@@ -218,6 +218,62 @@ export type Database = {
           },
         ]
       }
+      cronograma_obras: {
+        Row: {
+          created_at: string
+          data_fim_prevista: string
+          data_fim_real: string | null
+          data_inicio_prevista: string
+          data_inicio_real: string | null
+          descricao: string | null
+          etapa: string
+          id: string
+          obra_id: string
+          observacoes: string | null
+          ordem_execucao: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim_prevista: string
+          data_fim_real?: string | null
+          data_inicio_prevista: string
+          data_inicio_real?: string | null
+          descricao?: string | null
+          etapa: string
+          id?: string
+          obra_id: string
+          observacoes?: string | null
+          ordem_execucao: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim_prevista?: string
+          data_fim_real?: string | null
+          data_inicio_prevista?: string
+          data_inicio_real?: string | null
+          descricao?: string | null
+          etapa?: string
+          id?: string
+          obra_id?: string
+          observacoes?: string | null
+          ordem_execucao?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cronograma_obras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos_juridicos: {
         Row: {
           analise_id: string | null
@@ -379,6 +435,60 @@ export type Database = {
           },
         ]
       }
+      fotos_obras: {
+        Row: {
+          arquivo_url: string
+          created_at: string
+          cronograma_id: string | null
+          data_foto: string
+          descricao: string | null
+          etapa: string | null
+          id: string
+          obra_id: string
+          titulo: string | null
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          created_at?: string
+          cronograma_id?: string | null
+          data_foto?: string
+          descricao?: string | null
+          etapa?: string | null
+          id?: string
+          obra_id: string
+          titulo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          created_at?: string
+          cronograma_id?: string | null
+          data_foto?: string
+          descricao?: string | null
+          etapa?: string | null
+          id?: string
+          obra_id?: string
+          titulo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fotos_obras_cronograma_id_fkey"
+            columns: ["cronograma_id"]
+            isOneToOne: false
+            referencedRelation: "cronograma_obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fotos_obras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       historico_atividades: {
         Row: {
           acao: string
@@ -469,6 +579,122 @@ export type Database = {
           user_id?: string
           vagas?: number | null
           valor?: number
+        }
+        Relationships: []
+      }
+      licencas_obras: {
+        Row: {
+          arquivo_url: string | null
+          created_at: string
+          data_emissao: string | null
+          data_vencimento: string | null
+          id: string
+          nome: string
+          numero_licenca: string | null
+          obra_id: string
+          observacoes: string | null
+          orgao_emissor: string | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_vencimento?: string | null
+          id?: string
+          nome: string
+          numero_licenca?: string | null
+          obra_id: string
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          data_vencimento?: string | null
+          id?: string
+          nome?: string
+          numero_licenca?: string | null
+          obra_id?: string
+          observacoes?: string | null
+          orgao_emissor?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licencas_obras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obras: {
+        Row: {
+          cnpj_responsavel: string | null
+          created_at: string
+          data_conclusao: string | null
+          data_inicio: string
+          data_previsao_fim: string | null
+          descricao: string | null
+          endereco: string
+          id: string
+          nome: string
+          observacoes: string | null
+          progresso_percentual: number | null
+          responsavel_tecnico: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          valor_gasto: number | null
+          valor_orcamento: number | null
+        }
+        Insert: {
+          cnpj_responsavel?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_inicio: string
+          data_previsao_fim?: string | null
+          descricao?: string | null
+          endereco: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          progresso_percentual?: number | null
+          responsavel_tecnico?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          valor_gasto?: number | null
+          valor_orcamento?: number | null
+        }
+        Update: {
+          cnpj_responsavel?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_inicio?: string
+          data_previsao_fim?: string | null
+          descricao?: string | null
+          endereco?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          progresso_percentual?: number | null
+          responsavel_tecnico?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          valor_gasto?: number | null
+          valor_orcamento?: number | null
         }
         Relationships: []
       }
