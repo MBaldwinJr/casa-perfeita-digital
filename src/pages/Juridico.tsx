@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Calendar } from "lucide-react";
 import DocumentManager from "@/components/juridico/DocumentManager";
 import ProcessManager from "@/components/juridico/ProcessManager";
+import ResponsaveisManager from "@/components/juridico/ResponsaveisManager";
 import JuridicoOverview from "@/components/juridico/JuridicoOverview";
 import JuridicoCalendar from "@/components/juridico/JuridicoCalendar";
 import JuridicoFilters from "@/components/juridico/JuridicoFilters";
@@ -24,6 +25,7 @@ import {
   useUpdateAlertaStatus,
   useClientes,
   useImoveis,
+  useResponsaveis,
   AlertaJuridico
 } from "@/hooks/useSupabaseQuery";
 
@@ -65,6 +67,7 @@ export default function Juridico() {
   const { data: documentos = [], isLoading: loadingDocumentos } = useDocumentosJuridicos();
   const { data: clientes = [] } = useClientes();
   const { data: imoveis = [] } = useImoveis();
+  const { data: responsaveis = [] } = useResponsaveis();
   
   const createAnalise = useCreateAnalise();
   const updateAlertaStatus = useUpdateAlertaStatus();
@@ -207,10 +210,11 @@ export default function Juridico() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="processos">Processos</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
+          <TabsTrigger value="responsaveis">Responsáveis</TabsTrigger>
           <TabsTrigger value="calendario">Calendário</TabsTrigger>
         </TabsList>
 
@@ -230,6 +234,10 @@ export default function Juridico() {
 
         <TabsContent value="documentos">
           <DocumentManager />
+        </TabsContent>
+
+        <TabsContent value="responsaveis">
+          <ResponsaveisManager />
         </TabsContent>
 
         <TabsContent value="calendario">
@@ -323,9 +331,11 @@ export default function Juridico() {
                     <SelectValue placeholder="Selecione o responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Dr. Carlos Santos">Dr. Carlos Santos</SelectItem>
-                    <SelectItem value="Dra. Ana Costa">Dra. Ana Costa</SelectItem>
-                    <SelectItem value="Dr. Roberto Lima">Dr. Roberto Lima</SelectItem>
+                    {responsaveis.filter(resp => resp.ativo).map((responsavel) => (
+                      <SelectItem key={responsavel.id} value={responsavel.nome}>
+                        {responsavel.nome}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
