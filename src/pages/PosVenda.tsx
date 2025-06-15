@@ -52,6 +52,7 @@ export default function PosVenda() {
   const [showAgendamento, setShowAgendamento] = useState(false);
   const [showGarantia, setShowGarantia] = useState(false);
   const [showResposta, setShowResposta] = useState(false);
+  const [showPesquisaSatisfacao, setShowPesquisaSatisfacao] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroTipo, setFiltroTipo] = useState("todos");
 
@@ -82,6 +83,24 @@ export default function PosVenda() {
     protocolo: '',
     resposta: '',
     status_novo: ''
+  });
+
+  const [garantiaForm, setGarantiaForm] = useState({
+    cliente_id: '',
+    imovel_id: '',
+    item: '',
+    cobertura: '',
+    data_inicio: '',
+    data_fim: '',
+    status: 'Ativo'
+  });
+
+  const [pesquisaForm, setPesquisaForm] = useState({
+    cliente_id: '',
+    imovel_id: '',
+    categoria: '',
+    nota: 5,
+    comentario: ''
   });
 
   // Queries
@@ -120,6 +139,67 @@ export default function PosVenda() {
       status_novo: ''
     });
     setShowResposta(false);
+  };
+
+  const handleGarantia = async () => {
+    if (!garantiaForm.item || !garantiaForm.data_inicio || !garantiaForm.data_fim) {
+      toast({
+        title: "Erro",
+        description: "Preencha os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await createGarantia.mutateAsync({
+      cliente_id: garantiaForm.cliente_id || null,
+      imovel_id: garantiaForm.imovel_id || null,
+      item: garantiaForm.item,
+      cobertura: garantiaForm.cobertura,
+      data_inicio: garantiaForm.data_inicio,
+      data_fim: garantiaForm.data_fim,
+      status: garantiaForm.status
+    });
+
+    setGarantiaForm({
+      cliente_id: '',
+      imovel_id: '',
+      item: '',
+      cobertura: '',
+      data_inicio: '',
+      data_fim: '',
+      status: 'Ativo'
+    });
+    setShowGarantia(false);
+  };
+
+  const handlePesquisaSatisfacao = async () => {
+    if (!pesquisaForm.categoria || !pesquisaForm.comentario) {
+      toast({
+        title: "Erro",
+        description: "Preencha os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await createPesquisa.mutateAsync({
+      cliente_id: pesquisaForm.cliente_id || null,
+      imovel_id: pesquisaForm.imovel_id || null,
+      categoria: pesquisaForm.categoria,
+      nota: pesquisaForm.nota,
+      comentario: pesquisaForm.comentario,
+      data_pesquisa: new Date().toISOString().split('T')[0]
+    });
+
+    setPesquisaForm({
+      cliente_id: '',
+      imovel_id: '',
+      categoria: '',
+      nota: 5,
+      comentario: ''
+    });
+    setShowPesquisaSatisfacao(false);
   };
 
 
@@ -563,11 +643,19 @@ export default function PosVenda() {
         <TabsContent value="garantias" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-2" />
-                Gestão de Garantias
-              </CardTitle>
-              <CardDescription>Controle de prazos e coberturas</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="flex items-center">
+                    <Shield className="h-5 w-5 mr-2" />
+                    Gestão de Garantias
+                  </CardTitle>
+                  <CardDescription>Controle de prazos e coberturas</CardDescription>
+                </div>
+                <Button onClick={() => setShowGarantia(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Garantia
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -690,9 +778,9 @@ export default function PosVenda() {
                 )}
               </div>
               
-              <Button className="w-full mt-4" variant="outline">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Enviar Nova Pesquisa de Satisfação
+              <Button className="w-full mt-4" variant="outline" onClick={() => setShowPesquisaSatisfacao(true)}>
+                <Star className="h-4 w-4 mr-2" />
+                Nova Pesquisa de Satisfação
               </Button>
             </CardContent>
           </Card>
@@ -1043,6 +1131,204 @@ export default function PosVenda() {
                 Enviar Resposta
               </Button>
               <Button variant="outline" onClick={() => setShowResposta(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Nova Garantia */}
+      <Dialog open={showGarantia} onOpenChange={setShowGarantia}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova Garantia</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="cliente_garantia">Cliente</Label>
+                <Select value={garantiaForm.cliente_id} onValueChange={(value) => setGarantiaForm(prev => ({ ...prev, cliente_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        {cliente.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="imovel_garantia">Imóvel</Label>
+                <Select value={garantiaForm.imovel_id} onValueChange={(value) => setGarantiaForm(prev => ({ ...prev, imovel_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um imóvel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imoveis.map((imovel) => (
+                      <SelectItem key={imovel.id} value={imovel.id}>
+                        {imovel.titulo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="item_garantia">Item/Componente *</Label>
+                <Input
+                  id="item_garantia"
+                  value={garantiaForm.item}
+                  onChange={(e) => setGarantiaForm(prev => ({ ...prev, item: e.target.value }))}
+                  placeholder="Ex: Sistema elétrico, Hidráulica..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="status_garantia">Status</Label>
+                <Select value={garantiaForm.status} onValueChange={(value) => setGarantiaForm(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Vencida">Vencida</SelectItem>
+                    <SelectItem value="Renovada">Renovada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="data_inicio_garantia">Data de Início *</Label>
+                <Input
+                  id="data_inicio_garantia"
+                  type="date"
+                  value={garantiaForm.data_inicio}
+                  onChange={(e) => setGarantiaForm(prev => ({ ...prev, data_inicio: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="data_fim_garantia">Data de Fim *</Label>
+                <Input
+                  id="data_fim_garantia"
+                  type="date"
+                  value={garantiaForm.data_fim}
+                  onChange={(e) => setGarantiaForm(prev => ({ ...prev, data_fim: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="cobertura_garantia">Descrição da Cobertura</Label>
+              <Textarea
+                id="cobertura_garantia"
+                value={garantiaForm.cobertura}
+                onChange={(e) => setGarantiaForm(prev => ({ ...prev, cobertura: e.target.value }))}
+                placeholder="Descreva o que está coberto pela garantia..."
+                rows={3}
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleGarantia} className="flex-1">
+                Criar Garantia
+              </Button>
+              <Button variant="outline" onClick={() => setShowGarantia(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Nova Pesquisa de Satisfação */}
+      <Dialog open={showPesquisaSatisfacao} onOpenChange={setShowPesquisaSatisfacao}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova Pesquisa de Satisfação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="cliente_pesquisa">Cliente</Label>
+                <Select value={pesquisaForm.cliente_id} onValueChange={(value) => setPesquisaForm(prev => ({ ...prev, cliente_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        {cliente.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="imovel_pesquisa">Imóvel</Label>
+                <Select value={pesquisaForm.imovel_id} onValueChange={(value) => setPesquisaForm(prev => ({ ...prev, imovel_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um imóvel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imoveis.map((imovel) => (
+                      <SelectItem key={imovel.id} value={imovel.id}>
+                        {imovel.titulo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="categoria_pesquisa">Categoria *</Label>
+                <Select value={pesquisaForm.categoria} onValueChange={(value) => setPesquisaForm(prev => ({ ...prev, categoria: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Qualidade da Obra">Qualidade da Obra</SelectItem>
+                    <SelectItem value="Atendimento">Atendimento</SelectItem>
+                    <SelectItem value="Entrega">Entrega</SelectItem>
+                    <SelectItem value="Pós-venda">Pós-venda</SelectItem>
+                    <SelectItem value="Geral">Geral</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="nota_pesquisa">Nota (1-5)</Label>
+                <Select value={pesquisaForm.nota.toString()} onValueChange={(value) => setPesquisaForm(prev => ({ ...prev, nota: parseInt(value) }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a nota" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 - Muito Insatisfeito</SelectItem>
+                    <SelectItem value="2">2 - Insatisfeito</SelectItem>
+                    <SelectItem value="3">3 - Neutro</SelectItem>
+                    <SelectItem value="4">4 - Satisfeito</SelectItem>
+                    <SelectItem value="5">5 - Muito Satisfeito</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="comentario_pesquisa">Comentário *</Label>
+              <Textarea
+                id="comentario_pesquisa"
+                value={pesquisaForm.comentario}
+                onChange={(e) => setPesquisaForm(prev => ({ ...prev, comentario: e.target.value }))}
+                placeholder="Comentário ou feedback do cliente..."
+                rows={4}
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handlePesquisaSatisfacao} className="flex-1">
+                Criar Pesquisa
+              </Button>
+              <Button variant="outline" onClick={() => setShowPesquisaSatisfacao(false)}>
                 Cancelar
               </Button>
             </div>
