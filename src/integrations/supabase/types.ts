@@ -173,6 +173,87 @@ export type Database = {
           },
         ]
       }
+      arquivos_obras: {
+        Row: {
+          arquivo_pai_id: string | null
+          categoria: string
+          created_at: string
+          data_upload: string
+          descricao: string | null
+          id: string
+          metadata: Json | null
+          nome_arquivo: string
+          nome_original: string
+          obra_id: string
+          publico: boolean
+          status: string
+          tags: string[] | null
+          tamanho_bytes: number
+          tipo_arquivo: string
+          updated_at: string
+          url_storage: string
+          user_id: string
+          versao: number
+        }
+        Insert: {
+          arquivo_pai_id?: string | null
+          categoria: string
+          created_at?: string
+          data_upload?: string
+          descricao?: string | null
+          id?: string
+          metadata?: Json | null
+          nome_arquivo: string
+          nome_original: string
+          obra_id: string
+          publico?: boolean
+          status?: string
+          tags?: string[] | null
+          tamanho_bytes: number
+          tipo_arquivo: string
+          updated_at?: string
+          url_storage: string
+          user_id: string
+          versao?: number
+        }
+        Update: {
+          arquivo_pai_id?: string | null
+          categoria?: string
+          created_at?: string
+          data_upload?: string
+          descricao?: string | null
+          id?: string
+          metadata?: Json | null
+          nome_arquivo?: string
+          nome_original?: string
+          obra_id?: string
+          publico?: boolean
+          status?: string
+          tags?: string[] | null
+          tamanho_bytes?: number
+          tipo_arquivo?: string
+          updated_at?: string
+          url_storage?: string
+          user_id?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arquivos_obras_arquivo_pai_id_fkey"
+            columns: ["arquivo_pai_id"]
+            isOneToOne: false
+            referencedRelation: "arquivos_obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arquivos_obras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           cep: string | null
@@ -220,6 +301,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      compartilhamentos_arquivos: {
+        Row: {
+          acessos_realizados: number
+          arquivo_id: string
+          ativo: boolean
+          compartilhado_por: string
+          created_at: string
+          data_expiracao: string | null
+          email_compartilhado: string
+          id: string
+          tipo_acesso: string
+          token_acesso: string
+          ultimo_acesso: string | null
+        }
+        Insert: {
+          acessos_realizados?: number
+          arquivo_id: string
+          ativo?: boolean
+          compartilhado_por: string
+          created_at?: string
+          data_expiracao?: string | null
+          email_compartilhado: string
+          id?: string
+          tipo_acesso?: string
+          token_acesso: string
+          ultimo_acesso?: string | null
+        }
+        Update: {
+          acessos_realizados?: number
+          arquivo_id?: string
+          ativo?: boolean
+          compartilhado_por?: string
+          created_at?: string
+          data_expiracao?: string | null
+          email_compartilhado?: string
+          id?: string
+          tipo_acesso?: string
+          token_acesso?: string
+          ultimo_acesso?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compartilhamentos_arquivos_arquivo_id_fkey"
+            columns: ["arquivo_id"]
+            isOneToOne: false
+            referencedRelation: "arquivos_obras"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contratos: {
         Row: {
@@ -538,6 +669,47 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historico_arquivos: {
+        Row: {
+          acao: string
+          arquivo_id: string
+          created_at: string
+          detalhes: string | null
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          arquivo_id: string
+          created_at?: string
+          detalhes?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          arquivo_id?: string
+          created_at?: string
+          detalhes?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_arquivos_arquivo_id_fkey"
+            columns: ["arquivo_id"]
+            isOneToOne: false
+            referencedRelation: "arquivos_obras"
             referencedColumns: ["id"]
           },
         ]
@@ -1061,6 +1233,21 @@ export type Database = {
     Functions: {
       gerar_alertas_automaticos: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      gerar_token_acesso: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      log_acao_arquivo: {
+        Args: {
+          arquivo_id_param: string
+          user_id_param: string
+          acao_param: string
+          detalhes_param?: string
+          ip_param?: unknown
+          user_agent_param?: string
+        }
         Returns: undefined
       }
     }
