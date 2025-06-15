@@ -16,6 +16,8 @@ import { ObraDetailsModal } from "@/components/obras/ObraDetailsModal";
 import { CronogramaModal } from "@/components/obras/CronogramaModal";
 import { LicencasModal } from "@/components/obras/LicencasModal";
 import { FotosModal } from "@/components/obras/FotosModal";
+import { ObrasDashboard } from "@/components/obras/ObrasDashboard";
+import { FinancialControlModal } from "@/components/obras/FinancialControlModal";
 import { Tables } from "@/integrations/supabase/types";
 
 type Obra = Tables<'obras'>;
@@ -29,6 +31,7 @@ export default function Obras() {
   const [showCronogramaModal, setShowCronogramaModal] = useState(false);
   const [showLicencasModal, setShowLicencasModal] = useState(false);
   const [showFotosModal, setShowFotosModal] = useState(false);
+  const [showFinancialModal, setShowFinancialModal] = useState(false);
   const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
@@ -79,6 +82,11 @@ export default function Obras() {
   const handleOpenLicencas = (obra: Obra) => {
     setSelectedObra(obra);
     setShowLicencasModal(true);
+  };
+
+  const handleOpenFinancial = (obra: Obra) => {
+    setSelectedObra(obra);
+    setShowFinancialModal(true);
   };
 
   const handleCriarObra = async () => {
@@ -227,6 +235,9 @@ export default function Obras() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dashboard Analytics */}
+      <ObrasDashboard obras={obras as any} cronogramas={cronogramasGerais as any} />
 
       <Card>
         <CardHeader>
@@ -584,6 +595,13 @@ export default function Obras() {
           fotos={fotos as any}
           open={showFotosModal}
           onOpenChange={setShowFotosModal}
+        />
+
+        <FinancialControlModal
+          obra={selectedObra}
+          cronogramas={cronogramas as any}
+          open={showFinancialModal}
+          onOpenChange={setShowFinancialModal}
         />
       </div>
     );

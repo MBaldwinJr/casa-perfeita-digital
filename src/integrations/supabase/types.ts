@@ -51,6 +51,59 @@ export type Database = {
         }
         Relationships: []
       }
+      alertas_obras: {
+        Row: {
+          created_at: string
+          data_alerta: string
+          descricao: string
+          entidade_relacionada_id: string | null
+          id: string
+          obra_id: string
+          prioridade: string
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_alerta?: string
+          descricao: string
+          entidade_relacionada_id?: string | null
+          id?: string
+          obra_id: string
+          prioridade?: string
+          status?: string
+          tipo: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_alerta?: string
+          descricao?: string
+          entidade_relacionada_id?: string | null
+          id?: string
+          obra_id?: string
+          prioridade?: string
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_obras_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analises_juridicas: {
         Row: {
           arquivos_anexos: string[] | null
@@ -1006,7 +1059,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      gerar_alertas_automaticos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
