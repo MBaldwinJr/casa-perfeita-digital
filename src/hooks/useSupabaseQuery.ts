@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Types
 export interface Cliente {
@@ -1261,6 +1261,331 @@ export const useGerarCronogramaAutomatico = () => {
     onError: (error: any) => {
       toast({
         title: "Erro ao gerar cronograma",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// ============= PÓS-VENDA QUERIES =============
+
+// Types for Pós-venda
+interface AtendimentoPosVenda {
+  id: string;
+  protocolo: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  tipo: string;
+  assunto: string;
+  descricao?: string;
+  status: string;
+  prioridade: string;
+  responsavel?: string;
+  prazo_resposta?: string;
+  data_abertura: string;
+  data_resposta?: string;
+  data_resolucao?: string;
+  observacoes?: string;
+  cliente_email?: string;
+  cliente_telefone?: string;
+  clientes?: any;
+  imoveis?: any;
+}
+
+interface AgendamentoPosVenda {
+  id: string;
+  atendimento_id?: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  tipo: string;
+  data_agendamento: string;
+  horario: string;
+  responsavel?: string;
+  status: string;
+  endereco?: string;
+  observacoes?: string;
+  clientes?: any;
+  imoveis?: any;
+}
+
+interface GarantiaImovel {
+  id: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  tipo_garantia: string;
+  item: string;
+  data_inicio: string;
+  data_fim: string;
+  status: string;
+  cobertura?: string;
+  valor_cobertura?: number;
+  termos_condicoes?: string;
+  observacoes?: string;
+  clientes?: any;
+  imoveis?: any;
+}
+
+interface PesquisaSatisfacao {
+  id: string;
+  atendimento_id?: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  categoria: string;
+  nota: number;
+  comentario?: string;
+  sugestoes?: string;
+  aspectos_avaliados?: any;
+  data_pesquisa: string;
+  clientes?: any;
+  imoveis?: any;
+}
+
+// Queries para Atendimentos
+export const useAtendimentosPosVenda = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['atendimentos-pos-venda', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('atendimentos_pos_venda')
+        .select(`
+          *,
+          clientes:cliente_id(*),
+          imoveis:imovel_id(*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as AtendimentoPosVenda[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useCreateAtendimentoPosVenda = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (novoAtendimento: Partial<AtendimentoPosVenda>) => {
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('atendimentos_pos_venda')
+        .insert({
+          ...novoAtendimento,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['atendimentos-pos-venda'] });
+      toast({
+        title: "Atendimento criado!",
+        description: `Protocolo ${data.protocolo} gerado.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar atendimento",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Queries para Agendamentos
+export const useAgendamentosPosVenda = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['agendamentos-pos-venda', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('agendamentos_pos_venda')
+        .select(`
+          *,
+          clientes:cliente_id(*),
+          imoveis:imovel_id(*)
+        `)
+        .order('data_agendamento', { ascending: true });
+      
+      if (error) throw error;
+      return data as AgendamentoPosVenda[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useCreateAgendamentoPosVenda = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (novoAgendamento: Partial<AgendamentoPosVenda>) => {
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('agendamentos_pos_venda')
+        .insert({
+          ...novoAgendamento,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agendamentos-pos-venda'] });
+      toast({
+        title: "Agendamento criado!",
+        description: "Agendamento registrado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar agendamento",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Queries para Garantias
+export const useGarantiasImoveis = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['garantias-imoveis', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('garantias_imoveis')
+        .select(`
+          *,
+          clientes:cliente_id(*),
+          imoveis:imovel_id(*)
+        `)
+        .order('data_fim', { ascending: true });
+      
+      if (error) throw error;
+      return data as GarantiaImovel[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useCreateGarantiaImovel = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (novaGarantia: Partial<GarantiaImovel>) => {
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('garantias_imoveis')
+        .insert({
+          ...novaGarantia,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['garantias-imoveis'] });
+      toast({
+        title: "Garantia registrada!",
+        description: "Garantia cadastrada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao registrar garantia",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Queries para Pesquisas de Satisfação
+export const usePesquisasSatisfacao = () => {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['pesquisas-satisfacao', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('pesquisas_satisfacao')
+        .select(`
+          *,
+          clientes:cliente_id(*),
+          imoveis:imovel_id(*)
+        `)
+        .order('data_pesquisa', { ascending: false });
+      
+      if (error) throw error;
+      return data as PesquisaSatisfacao[];
+    },
+    enabled: !!user,
+  });
+};
+
+export const useCreatePesquisaSatisfacao = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (novaPesquisa: Partial<PesquisaSatisfacao>) => {
+      if (!user) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('pesquisas_satisfacao')
+        .insert({
+          ...novaPesquisa,
+          user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pesquisas-satisfacao'] });
+      toast({
+        title: "Pesquisa registrada!",
+        description: "Pesquisa de satisfação cadastrada com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao registrar pesquisa",
         description: error.message,
         variant: "destructive",
       });

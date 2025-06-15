@@ -9,6 +9,79 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agendamentos_pos_venda: {
+        Row: {
+          atendimento_id: string | null
+          cliente_id: string | null
+          created_at: string
+          data_agendamento: string
+          endereco: string | null
+          horario: string
+          id: string
+          imovel_id: string | null
+          observacoes: string | null
+          responsavel: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          atendimento_id?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          data_agendamento: string
+          endereco?: string | null
+          horario: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          atendimento_id?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          data_agendamento?: string
+          endereco?: string | null
+          horario?: string
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agendamentos_pos_venda_atendimento_id_fkey"
+            columns: ["atendimento_id"]
+            isOneToOne: false
+            referencedRelation: "atendimentos_pos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_pos_venda_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agendamentos_pos_venda_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alertas_juridicos: {
         Row: {
           created_at: string
@@ -250,6 +323,90 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      atendimentos_pos_venda: {
+        Row: {
+          assunto: string
+          cliente_email: string | null
+          cliente_id: string | null
+          cliente_telefone: string | null
+          created_at: string
+          data_abertura: string
+          data_resolucao: string | null
+          data_resposta: string | null
+          descricao: string | null
+          id: string
+          imovel_id: string | null
+          observacoes: string | null
+          prazo_resposta: unknown | null
+          prioridade: string
+          protocolo: string
+          responsavel: string | null
+          status: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assunto: string
+          cliente_email?: string | null
+          cliente_id?: string | null
+          cliente_telefone?: string | null
+          created_at?: string
+          data_abertura?: string
+          data_resolucao?: string | null
+          data_resposta?: string | null
+          descricao?: string | null
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          prazo_resposta?: unknown | null
+          prioridade?: string
+          protocolo: string
+          responsavel?: string | null
+          status?: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assunto?: string
+          cliente_email?: string | null
+          cliente_id?: string | null
+          cliente_telefone?: string | null
+          created_at?: string
+          data_abertura?: string
+          data_resolucao?: string | null
+          data_resposta?: string | null
+          descricao?: string | null
+          id?: string
+          imovel_id?: string | null
+          observacoes?: string | null
+          prazo_resposta?: unknown | null
+          prioridade?: string
+          protocolo?: string
+          responsavel?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atendimentos_pos_venda_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atendimentos_pos_venda_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
             referencedColumns: ["id"]
           },
         ]
@@ -673,6 +830,75 @@ export type Database = {
           },
         ]
       }
+      garantias_imoveis: {
+        Row: {
+          cliente_id: string | null
+          cobertura: string | null
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          id: string
+          imovel_id: string | null
+          item: string
+          observacoes: string | null
+          status: string
+          termos_condicoes: string | null
+          tipo_garantia: string
+          updated_at: string
+          user_id: string
+          valor_cobertura: number | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          cobertura?: string | null
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          id?: string
+          imovel_id?: string | null
+          item: string
+          observacoes?: string | null
+          status?: string
+          termos_condicoes?: string | null
+          tipo_garantia: string
+          updated_at?: string
+          user_id: string
+          valor_cobertura?: number | null
+        }
+        Update: {
+          cliente_id?: string | null
+          cobertura?: string | null
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          id?: string
+          imovel_id?: string | null
+          item?: string
+          observacoes?: string | null
+          status?: string
+          termos_condicoes?: string | null
+          tipo_garantia?: string
+          updated_at?: string
+          user_id?: string
+          valor_cobertura?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantias_imoveis_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantias_imoveis_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       historico_arquivos: {
         Row: {
           acao: string
@@ -971,6 +1197,76 @@ export type Database = {
         }
         Relationships: []
       }
+      pesquisas_satisfacao: {
+        Row: {
+          aspectos_avaliados: Json | null
+          atendimento_id: string | null
+          categoria: string
+          cliente_id: string | null
+          comentario: string | null
+          created_at: string
+          data_pesquisa: string
+          id: string
+          imovel_id: string | null
+          nota: number
+          sugestoes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aspectos_avaliados?: Json | null
+          atendimento_id?: string | null
+          categoria: string
+          cliente_id?: string | null
+          comentario?: string | null
+          created_at?: string
+          data_pesquisa?: string
+          id?: string
+          imovel_id?: string | null
+          nota: number
+          sugestoes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aspectos_avaliados?: Json | null
+          atendimento_id?: string | null
+          categoria?: string
+          cliente_id?: string | null
+          comentario?: string | null
+          created_at?: string
+          data_pesquisa?: string
+          id?: string
+          imovel_id?: string | null
+          nota?: number
+          sugestoes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesquisas_satisfacao_atendimento_id_fkey"
+            columns: ["atendimento_id"]
+            isOneToOne: false
+            referencedRelation: "atendimentos_pos_venda"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pesquisas_satisfacao_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pesquisas_satisfacao_imovel_id_fkey"
+            columns: ["imovel_id"]
+            isOneToOne: false
+            referencedRelation: "imoveis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processos_juridicos: {
         Row: {
           advogado_responsavel: string
@@ -1231,6 +1527,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_protocolo: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       gerar_alertas_automaticos: {
         Args: Record<PropertyKey, never>
         Returns: undefined
