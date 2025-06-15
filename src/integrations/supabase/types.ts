@@ -652,6 +652,45 @@ export type Database = {
           },
         ]
       }
+      responsaveis_juridicos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string | null
+          especializacao: string | null
+          id: string
+          nome: string
+          oab: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          especializacao?: string | null
+          id?: string
+          nome: string
+          oab?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string | null
+          especializacao?: string | null
+          id?: string
+          nome?: string
+          oab?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
