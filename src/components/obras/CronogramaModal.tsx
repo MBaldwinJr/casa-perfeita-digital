@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Calendar, CheckCircle, AlertTriangle, Clock, Settings2, Wand2 } from "lucide-react";
+import { Plus, Calendar, CheckCircle, AlertTriangle, Clock, Settings2, Edit } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-import { useCreateCronogramaObra, useObraEtapasSelecionadas } from "@/hooks/useSupabaseQuery";
+import { useCreateCronogramaObra, useUpdateCronogramaObra, useObraEtapasSelecionadas } from "@/hooks/useSupabaseQuery";
 import { useToast } from "@/hooks/use-toast";
-import { EtapasConfigModal } from "./EtapasConfigModal";
+import { EtapasTemplateModal } from "./EtapasTemplateModal";
 
 type CronogramaObra = Tables<'cronograma_obras'>;
 
@@ -27,9 +27,11 @@ interface CronogramaModalProps {
 export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas, open, onOpenChange }: CronogramaModalProps) {
   const { toast } = useToast();
   const createCronograma = useCreateCronogramaObra();
+  const updateCronograma = useUpdateCronogramaObra();
   const { data: etapasSelecionadas = [] } = useObraEtapasSelecionadas(obraId);
   const [showForm, setShowForm] = useState(false);
   const [showEtapasConfig, setShowEtapasConfig] = useState(false);
+  const [editingEtapa, setEditingEtapa] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     etapa: '',
     descricao: '',
@@ -72,6 +74,24 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
         status: 'pendente',
         observacoes: ''
       });
+    } catch (error) {
+      // Erro já tratado no hook
+    }
+  };
+
+  const handleUpdateStatus = async (etapaId: string, status: string, dataInicioReal?: string, dataFimReal?: string) => {
+    try {
+      const updateData: any = { status };
+      
+      if (dataInicioReal) updateData.data_inicio_real = dataInicioReal;
+      if (dataFimReal) updateData.data_fim_real = dataFimReal;
+      
+      await updateCronograma.mutateAsync({
+        id: etapaId,
+        ...updateData
+      });
+      
+      setEditingEtapa(null);
     } catch (error) {
       // Erro já tratado no hook
     }
@@ -270,7 +290,14 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
                         )}
                       </div>
                       
-                      <div className="ml-4">
+                      <div className="ml-4 flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingEtapa(editingEtapa === etapa.id ? null : etapa.id)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         <Badge 
                           variant="outline" 
                           className={
@@ -284,6 +311,51 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
                         </Badge>
                       </div>
                     </div>
+                    
+                    {/* Formulário de edição */}
+                    {editingEtapa === etapa.id && (
+                      <div className="mt-4 p-4 border-t bg-muted/20 rounded-b-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <Label htmlFor={`status-${etapa.id}`}>Status</Label>
+                            <Select 
+                              value={etapa.status} 
+                              onValueChange={(value) => handleUpdateStatus(etapa.id, value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pendente">Pendente</SelectItem>
+                                <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                <SelectItem value="concluida">Concluída</SelectItem>
+                                <SelectItem value="atrasada">Atrasada</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor={`data-inicio-real-${etapa.id}`}>Data Início Real</Label>
+                            <Input
+                              id={`data-inicio-real-${etapa.id}`}
+                              type="date"
+                              value={etapa.data_inicio_real || ''}
+                              onChange={(e) => handleUpdateStatus(etapa.id, etapa.status, e.target.value, etapa.data_fim_real || undefined)}
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor={`data-fim-real-${etapa.id}`}>Data Fim Real</Label>
+                            <Input
+                              id={`data-fim-real-${etapa.id}`}
+                              type="date"
+                              value={etapa.data_fim_real || ''}
+                              onChange={(e) => handleUpdateStatus(etapa.id, etapa.status, etapa.data_inicio_real || undefined, e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))
@@ -292,12 +364,15 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
         </div>
 
         {/* Modal de Configuração de Etapas */}
-        <EtapasConfigModal
+        <EtapasTemplateModal
           obraId={obraId}
           obraNome={obraNome}
-          dataInicioObra={dataInicioObra}
           open={showEtapasConfig}
           onOpenChange={setShowEtapasConfig}
+          onCronogramaGerado={() => {
+            // Recarregar cronogramas quando gerado
+            setShowEtapasConfig(false);
+          }}
         />
       </DialogContent>
     </Dialog>

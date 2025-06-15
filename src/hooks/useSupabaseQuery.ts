@@ -936,6 +936,38 @@ export const useCreateCronogramaObra = () => {
   });
 };
 
+export const useUpdateCronogramaObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updateData }: Partial<CronogramaObra> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('cronograma_obras')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['cronogramas', data.obra_id] });
+      toast({
+        title: "Cronograma atualizado!",
+        description: "Status da etapa foi atualizado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar cronograma",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 export const useCreateLicencaObra = () => {
   const queryClient = useQueryClient();
 
