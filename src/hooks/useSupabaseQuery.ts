@@ -1353,7 +1353,26 @@ export const useAtendimentosPosVenda = () => {
       const { data, error } = await supabase
         .from('atendimentos_pos_venda')
         .select(`
-          *,
+          id,
+          protocolo,
+          cliente_id,
+          imovel_id,
+          tipo,
+          assunto,
+          descricao,
+          prioridade,
+          status,
+          responsavel,
+          cliente_email,
+          cliente_telefone,
+          data_abertura,
+          data_resposta,
+          data_resolucao,
+          prazo_resposta,
+          observacoes,
+          created_at,
+          updated_at,
+          user_id,
           clientes:cliente_id(*),
           imoveis:imovel_id(*)
         `)
