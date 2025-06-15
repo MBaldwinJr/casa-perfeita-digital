@@ -7,24 +7,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Calendar, CheckCircle, AlertTriangle, Clock } from "lucide-react";
+import { Plus, Calendar, CheckCircle, AlertTriangle, Clock, Settings2, Wand2 } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import { useCreateCronogramaObra, useObraEtapasSelecionadas } from "@/hooks/useSupabaseQuery";
+import { useToast } from "@/hooks/use-toast";
+import { EtapasConfigModal } from "./EtapasConfigModal";
 
 type CronogramaObra = Tables<'cronograma_obras'>;
-import { useCreateCronogramaObra } from "@/hooks/useSupabaseQuery";
-import { useToast } from "@/hooks/use-toast";
 
 interface CronogramaModalProps {
   obraId: string;
+  obraNome: string;
+  dataInicioObra: string;
   cronogramas: CronogramaObra[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CronogramaModal({ obraId, cronogramas, open, onOpenChange }: CronogramaModalProps) {
+export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas, open, onOpenChange }: CronogramaModalProps) {
   const { toast } = useToast();
   const createCronograma = useCreateCronogramaObra();
+  const { data: etapasSelecionadas = [] } = useObraEtapasSelecionadas(obraId);
   const [showForm, setShowForm] = useState(false);
+  const [showEtapasConfig, setShowEtapasConfig] = useState(false);
   const [formData, setFormData] = useState({
     etapa: '',
     descricao: '',
@@ -102,10 +107,16 @@ export function CronogramaModal({ obraId, cronogramas, open, onOpenChange }: Cro
               <Calendar className="h-5 w-5" />
               Cronograma da Obra
             </div>
-            <Button onClick={() => setShowForm(!showForm)} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Etapa
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setShowEtapasConfig(true)} size="sm" variant="outline">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Configurar Etapas
+              </Button>
+              <Button onClick={() => setShowForm(!showForm)} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Etapa
+              </Button>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
@@ -279,7 +290,16 @@ export function CronogramaModal({ obraId, cronogramas, open, onOpenChange }: Cro
             )}
           </div>
         </div>
+
+        {/* Modal de Configuração de Etapas */}
+        <EtapasConfigModal
+          obraId={obraId}
+          obraNome={obraNome}
+          dataInicioObra={dataInicioObra}
+          open={showEtapasConfig}
+          onOpenChange={setShowEtapasConfig}
+        />
       </DialogContent>
     </Dialog>
   );
-}
+};

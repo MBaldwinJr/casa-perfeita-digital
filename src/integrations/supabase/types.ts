@@ -638,6 +638,54 @@ export type Database = {
           },
         ]
       }
+      obra_etapas_selecionadas: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          duracao_personalizada_dias: number | null
+          id: string
+          obra_id: string
+          ordem_personalizada: number | null
+          template_etapa_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          duracao_personalizada_dias?: number | null
+          id?: string
+          obra_id: string
+          ordem_personalizada?: number | null
+          template_etapa_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          duracao_personalizada_dias?: number | null
+          id?: string
+          obra_id?: string
+          ordem_personalizada?: number | null
+          template_etapa_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_etapas_selecionadas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_etapas_selecionadas_template_etapa_id_fkey"
+            columns: ["template_etapa_id"]
+            isOneToOne: false
+            referencedRelation: "template_etapas_obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           cnpj_responsavel: string | null
@@ -914,6 +962,42 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      template_etapas_obras: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          descricao: string | null
+          duracao_estimada_dias: number
+          id: string
+          nome: string
+          ordem_execucao: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          created_at?: string
+          descricao?: string | null
+          duracao_estimada_dias?: number
+          id?: string
+          nome: string
+          ordem_execucao: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          duracao_estimada_dias?: number
+          id?: string
+          nome?: string
+          ordem_execucao?: number
+          updated_at?: string
         }
         Relationships: []
       }

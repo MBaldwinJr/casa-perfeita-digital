@@ -549,6 +549,8 @@ export default function Obras() {
 
         <CronogramaModal
           obraId={selectedObraId}
+          obraNome={selectedObra?.nome || ''}
+          dataInicioObra={selectedObra?.data_inicio || ''}
           cronogramas={cronogramas as any}
           open={showCronogramaModal}
           onOpenChange={setShowCronogramaModal}
