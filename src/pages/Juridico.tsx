@@ -13,7 +13,7 @@ import DocumentManager from "@/components/juridico/DocumentManager";
 import ProcessManager from "@/components/juridico/ProcessManager";
 import JuridicoOverview from "@/components/juridico/JuridicoOverview";
 import JuridicoCalendar from "@/components/juridico/JuridicoCalendar";
-import JuridicoFilters, { JuridicoFiltersState } from "@/components/juridico/JuridicoFilters";
+import JuridicoFilters from "@/components/juridico/JuridicoFilters";
 import { useToast } from "@/hooks/use-toast";
 import { 
   useAlertasJuridicos, 
@@ -38,15 +38,14 @@ export default function Juridico() {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Filtros
-  const [filters, setFilters] = useState<JuridicoFiltersState>({
-    search: '',
+  const [filters, setFilters] = useState({
+    busca: '',
     status: '',
     tipo: '',
     prioridade: '',
     responsavel: '',
     dataInicio: '',
-    dataFim: '',
-    tags: []
+    dataFim: ''
   });
 
   const [formData, setFormData] = useState({
@@ -74,27 +73,26 @@ export default function Juridico() {
   const isLoading = loadingAlertas || loadingAnalises || loadingProcessos || loadingDocumentos;
 
   // Funções de filtro
-  const handleFiltersChange = (newFilters: Partial<JuridicoFiltersState>) => {
+  const handleFiltersChange = (newFilters: any) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
   const handleClearFilters = () => {
     setFilters({
-      search: '',
+      busca: '',
       status: '',
       tipo: '',
       prioridade: '',
       responsavel: '',
       dataInicio: '',
-      dataFim: '',
-      tags: []
+      dataFim: ''
     });
   };
 
   // Aplicar filtros aos dados
   const filteredAnalises = analises.filter(analise => {
-    if (filters.search && !analise.tipo.toLowerCase().includes(filters.search.toLowerCase()) && 
-        !analise.responsavel.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if (filters.busca && !analise.tipo.toLowerCase().includes(filters.busca.toLowerCase()) && 
+        !analise.responsavel.toLowerCase().includes(filters.busca.toLowerCase())) return false;
     if (filters.status && analise.status !== filters.status) return false;
     if (filters.tipo && analise.tipo !== filters.tipo) return false;
     if (filters.prioridade && analise.prioridade !== filters.prioridade) return false;
@@ -103,8 +101,8 @@ export default function Juridico() {
   });
 
   const filteredProcessos = processos.filter(processo => {
-    if (filters.search && !processo.tipo.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !processo.advogado_responsavel.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if (filters.busca && !processo.tipo.toLowerCase().includes(filters.busca.toLowerCase()) &&
+        !processo.advogado_responsavel.toLowerCase().includes(filters.busca.toLowerCase())) return false;
     if (filters.status && processo.status !== filters.status) return false;
     return true;
   });
@@ -205,8 +203,6 @@ export default function Juridico() {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onClearFilters={handleClearFilters}
-          showAdvanced={showAdvancedFilters}
-          onToggleAdvanced={() => setShowAdvancedFilters(!showAdvancedFilters)}
         />
       )}
 

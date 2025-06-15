@@ -31,13 +31,19 @@ export default function JuridicoOverview({
     }
   };
 
+  // Calcular estatísticas
+  const estatisticas = {
+    processosAtivos: processos.filter(p => p.status === 'ativo').length,
+    documentosValidos: documentos.length > 0 ? Math.round((documentos.filter(d => d.status === 'valido').length / documentos.length) * 100) : 0,
+    alertasAtivos: alertas.length,
+    processosConcluidos: processos.filter(p => p.status === 'finalizado').length,
+    prazosVencidos: documentos.filter(d => d.data_vencimento && new Date(d.data_vencimento) < new Date()).length,
+    certificacoesOk: documentos.length > 0 ? Math.round((documentos.filter(d => d.status === 'valido').length / documentos.length) * 100) : 0
+  };
+
   return (
     <div className="space-y-6">
-      <JuridicoStats 
-        processos={processos}
-        documentos={documentos}
-        alertas={alertas}
-      />
+      <JuridicoStats estatisticas={estatisticas} />
 
       {/* Alertas Jurídicos */}
       <Card>
