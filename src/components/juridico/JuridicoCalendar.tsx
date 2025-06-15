@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Clock, AlertTriangle } from "lucide-react";
+import { Calendar, CalendarIcon, Clock } from "lucide-react";
+import { format, parseISO, isToday, isTomorrow, isThisWeek, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { AnaliseJuridica, ProcessoJuridico, DocumentoJuridico } from "@/hooks/useSupabaseQuery";
-import { cn } from "@/lib/utils";
 
 interface JuridicoCalendarProps {
   analises: AnaliseJuridica[];
@@ -13,209 +12,179 @@ interface JuridicoCalendarProps {
   documentos: DocumentoJuridico[];
 }
 
-interface CalendarEvent {
+interface PrazoItem {
   id: string;
-  title: string;
-  date: Date;
-  type: 'analise' | 'processo' | 'documento';
-  priority: 'baixa' | 'media' | 'alta' | 'urgente';
-  description: string;
+  titulo: string;
+  data: Date;
+  tipo: 'analise' | 'processo' | 'documento';
+  prioridade?: string;
+  status: string;
 }
 
 export default function JuridicoCalendar({ analises, processos, documentos }: JuridicoCalendarProps) {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [visaoAtual, setVisaoAtual] = useState<'hoje' | 'semana' | 'mes'>('semana');
 
-  // Converter dados para eventos do calendário
-  const events: CalendarEvent[] = [
-    ...analises
-      .filter(a => a.prazo_conclusao)
-      .map(a => ({
-        id: a.id,
-        title: `Análise: ${a.tipo}`,
-        date: new Date(a.prazo_conclusao!),
-        type: 'analise' as const,
-        priority: a.prioridade,
-        description: a.observacoes || 'Sem descrição'
-      })),
-    ...processos
-      .filter(p => p.data_conclusao)
-      .map(p => ({
-        id: p.id,
-        title: `Processo: ${p.tipo}`,
-        date: new Date(p.data_conclusao!),
-        type: 'processo' as const,
-        priority: 'media' as const,
-        description: p.descricao || 'Sem descrição'
-      })),
-    ...documentos
-      .filter(d => d.data_vencimento)
-      .map(d => ({
-        id: d.id,
-        title: `Doc: ${d.nome}`,
-        date: new Date(d.data_vencimento!),
-        type: 'documento' as const,
-        priority: (new Date(d.data_vencimento!) < new Date() ? 'urgente' : 'baixa') as 'baixa' | 'media' | 'alta' | 'urgente',
-        description: d.observacoes || 'Documento jurídico'
-      }))
-  ];
+  // Consolidar todos os prazos
+  const prazos: PrazoItem[] = React.useMemo(() => {
+    const prazosArray: PrazoItem[] = [];
 
-  // Eventos do dia selecionado
-  const selectedDateEvents = selectedDate 
-    ? events.filter(event => 
-        event.date.toDateString() === selectedDate.toDateString()
-      )
-    : [];
+    // Prazos das análises
+    analises.forEach(analise => {
+      if (analise.prazo_conclusao) {
+        prazosArray.push({
+          id: analise.id,
+          titulo: `Análise: ${analise.tipo}`,
+          data: parseISO(analise.prazo_conclusao),
+          tipo: 'analise',
+          prioridade: analise.prioridade,
+          status: analise.status
+        });
+      }
+    });
 
-  // Próximos eventos (7 dias)
-  const upcomingEvents = events
-    .filter(event => {
-      const today = new Date();
-      const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-      return event.date >= today && event.date <= nextWeek;
-    })
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 5);
+    // Prazos dos processos
+    processos.forEach(processo => {
+      if (processo.data_conclusao) {
+        prazosArray.push({
+          id: processo.id,
+          titulo: `Processo: ${processo.tipo}`,
+          data: parseISO(processo.data_conclusao),
+          tipo: 'processo',
+          status: processo.status
+        });
+      }
+    });
 
-  // Datas com eventos
-  const datesWithEvents = events.map(event => event.date);
+    // Prazos dos documentos
+    documentos.forEach(documento => {
+      if (documento.data_vencimento) {
+        prazosArray.push({
+          id: documento.id,
+          titulo: `Doc: ${documento.nome}`,
+          data: parseISO(documento.data_vencimento),
+          tipo: 'documento',
+          status: documento.status
+        });
+      }
+    });
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgente': return 'bg-red-500';
-      case 'alta': return 'bg-orange-500';
-      case 'media': return 'bg-yellow-500';
-      case 'baixa': return 'bg-green-500';
-      default: return 'bg-gray-500';
+    return prazosArray.sort((a, b) => a.data.getTime() - b.data.getTime());
+  }, [analises, processos, documentos]);
+
+  // Filtrar prazos baseado na visão atual
+  const prazosFiltrados = React.useMemo(() => {
+    const hoje = new Date();
+    
+    switch (visaoAtual) {
+      case 'hoje':
+        return prazos.filter(prazo => isToday(prazo.data));
+      case 'semana':
+        return prazos.filter(prazo => isThisWeek(prazo.data, { weekStartsOn: 1 }));
+      case 'mes':
+        const proximoMes = addDays(hoje, 30);
+        return prazos.filter(prazo => prazo.data >= hoje && prazo.data <= proximoMes);
+      default:
+        return prazos;
+    }
+  }, [prazos, visaoAtual]);
+
+  const getCorPorTipo = (tipo: string) => {
+    switch (tipo) {
+      case 'analise': return 'bg-primary';
+      case 'processo': return 'bg-success';
+      case 'documento': return 'bg-warning';
+      default: return 'bg-muted';
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'analise': return '📋';
-      case 'processo': return '⚖️';
-      case 'documento': return '📄';
-      default: return '📅';
+  const getCorPorPrioridade = (prioridade?: string) => {
+    switch (prioridade) {
+      case 'urgente': return 'border-l-destructive';
+      case 'alta': return 'border-l-warning';
+      case 'media': return 'border-l-info';
+      case 'baixa': return 'border-l-success';
+      default: return 'border-l-muted';
     }
+  };
+
+  const getStatusPrazo = (data: Date) => {
+    if (isToday(data)) return { texto: 'Hoje', cor: 'text-destructive' };
+    if (isTomorrow(data)) return { texto: 'Amanhã', cor: 'text-warning' };
+    if (data < new Date()) return { texto: 'Vencido', cor: 'text-destructive' };
+    return { texto: format(data, 'dd/MM', { locale: ptBR }), cor: 'text-muted-foreground' };
   };
 
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      {/* Calendário */}
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center">
-                <CalendarIcon className="h-5 w-5 mr-2" />
-                Calendário de Prazos
-              </CardTitle>
-              <CardDescription>Visualização de todos os prazos jurídicos</CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'calendar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('calendar')}
-              >
-                Calendário
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                Lista
-              </Button>
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <CalendarIcon className="h-5 w-5 mr-2" />
+            Calendário de Prazos
           </div>
-        </CardHeader>
-        <CardContent>
-          {viewMode === 'calendar' ? (
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className={cn("w-full pointer-events-auto")}
-              modifiers={{
-                hasEvent: datesWithEvents
-              }}
-              modifiersStyles={{
-                hasEvent: { 
-                  backgroundColor: 'hsl(var(--primary))', 
-                  color: 'white',
-                  fontWeight: 'bold'
-                }
-              }}
-            />
-          ) : (
-            <div className="space-y-3">
-              {upcomingEvents.map((event) => (
-                <div key={event.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                  <span className="text-2xl">{getTypeIcon(event.type)}</span>
-                  <div className="flex-1">
-                    <h4 className="font-medium">{event.title}</h4>
-                    <p className="text-sm text-muted-foreground">{event.description}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {event.date.toLocaleDateString('pt-BR')}
-                    </p>
+          <div className="flex gap-2">
+            {(['hoje', 'semana', 'mes'] as const).map((visao) => (
+              <button
+                key={visao}
+                onClick={() => setVisaoAtual(visao)}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                  visaoAtual === visao 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-muted hover:bg-muted/80'
+                }`}
+              >
+                {visao.charAt(0).toUpperCase() + visao.slice(1)}
+              </button>
+            ))}
+          </div>
+        </CardTitle>
+        <CardDescription>
+          Prazos e vencimentos importantes - {prazosFiltrados.length} itens
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {prazosFiltrados.length > 0 ? (
+            prazosFiltrados.map((prazo) => {
+              const statusPrazo = getStatusPrazo(prazo.data);
+              return (
+                <div 
+                  key={prazo.id} 
+                  className={`p-3 border-l-4 ${getCorPorPrioridade(prazo.prioridade)} bg-muted/30 rounded-r-lg hover:bg-muted/50 transition-colors`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Badge className={`${getCorPorTipo(prazo.tipo)} text-white`}>
+                        {prazo.tipo.charAt(0).toUpperCase() + prazo.tipo.slice(1)}
+                      </Badge>
+                      <span className="font-medium">{prazo.titulo}</span>
+                      {prazo.prioridade && (
+                        <Badge variant="outline" className="text-xs">
+                          {prazo.prioridade}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className={`text-sm font-medium ${statusPrazo.cor}`}>
+                        {statusPrazo.texto}
+                      </span>
+                    </div>
                   </div>
-                  <Badge className={`${getPriorityColor(event.priority)} text-white`}>
-                    {event.priority}
-                  </Badge>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Status: {prazo.status} • {format(prazo.data, 'dd/MM/yyyy - EEEE', { locale: ptBR })}
+                  </div>
                 </div>
-              ))}
+              );
+            })
+          ) : (
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">Nenhum prazo encontrado para o período selecionado</p>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Eventos do dia / Próximos eventos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Clock className="h-5 w-5 mr-2" />
-            {selectedDate ? 'Eventos do Dia' : 'Próximos Eventos'}
-          </CardTitle>
-          <CardDescription>
-            {selectedDate 
-              ? selectedDate.toLocaleDateString('pt-BR')
-              : 'Próximos 7 dias'
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {(selectedDate ? selectedDateEvents : upcomingEvents).length > 0 ? (
-              (selectedDate ? selectedDateEvents : upcomingEvents).map((event) => (
-                <div key={event.id} className="space-y-2 p-3 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{event.title}</span>
-                    <Badge 
-                      variant="outline" 
-                      className={`${getPriorityColor(event.priority)} text-white border-transparent`}
-                    >
-                      {event.priority}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{event.description}</p>
-                  {!selectedDate && (
-                    <p className="text-xs text-muted-foreground">
-                      📅 {event.date.toLocaleDateString('pt-BR')}
-                    </p>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">
-                  {selectedDate ? 'Nenhum evento neste dia' : 'Nenhum evento próximo'}
-                </p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
