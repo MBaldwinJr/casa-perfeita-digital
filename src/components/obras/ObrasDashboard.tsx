@@ -6,7 +6,7 @@ import { Calendar, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Clock } f
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { format, addDays, eachDayOfInterval, isWithinInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR } from 'date-fns/locale/pt-BR';
 
 type Obra = Tables<'obras'>;
 type CronogramaObra = Tables<'cronograma_obras'>;
