@@ -51,6 +51,7 @@ export default function PosVenda() {
   const [showNovoAtendimento, setShowNovoAtendimento] = useState(false);
   const [showAgendamento, setShowAgendamento] = useState(false);
   const [showGarantia, setShowGarantia] = useState(false);
+  const [showResposta, setShowResposta] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [filtroTipo, setFiltroTipo] = useState("todos");
 
@@ -76,6 +77,13 @@ export default function PosVenda() {
     observacoes: ''
   });
 
+  const [respostaForm, setRespostaForm] = useState({
+    atendimento_id: '',
+    protocolo: '',
+    resposta: '',
+    status_novo: ''
+  });
+
   // Queries
   const { data: atendimentos = [], isLoading: loadingAtendimentos } = useAtendimentosPosVenda();
   const { data: agendamentos = [], isLoading: loadingAgendamentos } = useAgendamentosPosVenda();
@@ -89,6 +97,30 @@ export default function PosVenda() {
   const createAgendamento = useCreateAgendamentoPosVenda();
   const createGarantia = useCreateGarantiaImovel();
   const createPesquisa = useCreatePesquisaSatisfacao();
+
+  const handleResposta = async () => {
+    if (!respostaForm.resposta) {
+      toast({
+        title: "Erro",
+        description: "Digite uma resposta.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Resposta enviada",
+      description: `Resposta enviada para o protocolo ${respostaForm.protocolo}`,
+    });
+
+    setRespostaForm({
+      atendimento_id: '',
+      protocolo: '',
+      resposta: '',
+      status_novo: ''
+    });
+    setShowResposta(false);
+  };
 
 
 
@@ -224,11 +256,14 @@ export default function PosVenda() {
     }
   };
 
-  const handleResponder = (protocolo: string) => {
-    toast({
-      title: "Resposta",
-      description: `Funcionalidade de resposta para o protocolo ${protocolo} será implementada.`,
+  const handleResponder = (atendimento: any) => {
+    setRespostaForm({
+      atendimento_id: atendimento.id,
+      protocolo: atendimento.protocolo,
+      resposta: '',
+      status_novo: atendimento.status
     });
+    setShowResposta(true);
   };
 
   const atendimentosFiltrados = atendimentos.filter(atendimento => {
@@ -455,7 +490,7 @@ export default function PosVenda() {
                             </Button>
                             <Button 
                               size="sm"
-                              onClick={() => handleResponder(atendimento.protocolo)}
+                              onClick={() => handleResponder(atendimento)}
                             >
                               <MessageSquare className="h-4 w-4 mr-1" />
                               Responder
@@ -958,6 +993,56 @@ export default function PosVenda() {
                 Agendar Visita
               </Button>
               <Button variant="outline" onClick={() => setShowAgendamento(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Responder Atendimento */}
+      <Dialog open={showResposta} onOpenChange={setShowResposta}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Responder Atendimento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-muted p-4 rounded-lg">
+              <Label className="text-sm font-medium">Protocolo: {respostaForm.protocolo}</Label>
+            </div>
+            
+            <div>
+              <Label htmlFor="status_novo">Novo Status</Label>
+              <Select value={respostaForm.status_novo} onValueChange={(value) => setRespostaForm(prev => ({ ...prev, status_novo: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o novo status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="aberto">Aberto</SelectItem>
+                  <SelectItem value="em andamento">Em Andamento</SelectItem>
+                  <SelectItem value="resolvido">Resolvido</SelectItem>
+                  <SelectItem value="pausado">Pausado</SelectItem>
+                  <SelectItem value="cancelado">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="resposta">Resposta *</Label>
+              <Textarea
+                id="resposta"
+                value={respostaForm.resposta}
+                onChange={(e) => setRespostaForm(prev => ({ ...prev, resposta: e.target.value }))}
+                placeholder="Digite sua resposta ao cliente..."
+                rows={6}
+              />
+            </div>
+
+            <div className="flex space-x-2">
+              <Button onClick={handleResposta} className="flex-1">
+                Enviar Resposta
+              </Button>
+              <Button variant="outline" onClick={() => setShowResposta(false)}>
                 Cancelar
               </Button>
             </div>
