@@ -283,6 +283,9 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
 
       if (error) throw error;
 
+      // Atualizar progresso da obra baseado nas etapas concluídas
+      await atualizarProgressoObra();
+
       toast({
         title: "Status atualizado",
         description: "Status da etapa foi atualizado com sucesso.",
@@ -295,6 +298,33 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const atualizarProgressoObra = async () => {
+    try {
+      // Buscar todas as etapas da obra
+      const { data: todasEtapas, error: etapasError } = await supabase
+        .from('cronograma_obras')
+        .select('*')
+        .eq('obra_id', obraId);
+
+      if (etapasError) throw etapasError;
+
+      if (todasEtapas && todasEtapas.length > 0) {
+        const etapasConcluidas = todasEtapas.filter(etapa => etapa.status === 'concluida').length;
+        const progressoCalculado = Math.round((etapasConcluidas / todasEtapas.length) * 100);
+
+        // Atualizar o progresso da obra
+        const { error: obraError } = await supabase
+          .from('obras')
+          .update({ progresso_percentual: progressoCalculado })
+          .eq('id', obraId);
+
+        if (obraError) throw obraError;
+      }
+    } catch (error: any) {
+      console.error('Erro ao atualizar progresso da obra:', error);
     }
   };
 
