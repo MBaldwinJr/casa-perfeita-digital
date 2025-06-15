@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CalendarIcon, Clock } from "lucide-react";
 import { format, parseISO, isToday, isTomorrow, isThisWeek, addDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+
 import { AnaliseJuridica, ProcessoJuridico, DocumentoJuridico } from "@/hooks/useSupabaseQuery";
 
 interface JuridicoCalendarProps {
@@ -111,7 +111,7 @@ export default function JuridicoCalendar({ analises, processos, documentos }: Ju
     if (isToday(data)) return { texto: 'Hoje', cor: 'text-destructive' };
     if (isTomorrow(data)) return { texto: 'Amanhã', cor: 'text-warning' };
     if (data < new Date()) return { texto: 'Vencido', cor: 'text-destructive' };
-    return { texto: format(data, 'dd/MM', { locale: ptBR }), cor: 'text-muted-foreground' };
+    return { texto: format(data, 'dd/MM'), cor: 'text-muted-foreground' };
   };
 
   return (
@@ -172,7 +172,7 @@ export default function JuridicoCalendar({ analises, processos, documentos }: Ju
                     </div>
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Status: {prazo.status} • {format(prazo.data, 'dd/MM/yyyy - EEEE', { locale: ptBR })}
+                    Status: {prazo.status} • {format(prazo.data, 'dd/MM/yyyy')}
                   </div>
                 </div>
               );
