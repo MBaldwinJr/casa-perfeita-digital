@@ -45,13 +45,13 @@ interface CronogramaModalProps {
 }
 
 export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas, open, onOpenChange }: CronogramaModalProps) {
-  const [cronogramas, setCronogramas] = useState<CronogramaObra[]>([]);
+  const [localCronogramas, setLocalCronogramas] = useState<CronogramaObra[]>(cronogramas || []);
   const [templates, setTemplates] = useState<TemplateEtapa[]>([]);
   const [etapasSelecionadas, setEtapasSelecionadas] = useState<ObraEtapaSelecionada[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
-  const [dataInicio, setDataInicio] = useState<Date | undefined>(undefined);
+  const [dataInicio, setDataInicio] = useState<Date | undefined>(dataInicioObra ? new Date(dataInicioObra) : undefined);
   const [editingEtapa, setEditingEtapa] = useState<CronogramaObra | null>(null);
   const [newEtapaForm, setNewEtapaForm] = useState({
     etapa: '',
@@ -65,13 +65,13 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open && obra) {
+    if (open && obraId) {
       loadData();
     }
-  }, [open, obra]);
+  }, [open, obraId]);
 
   const loadData = async () => {
-    if (!obra) return;
+    if (!obraId) return;
 
     setLoading(true);
     try {
@@ -79,7 +79,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
       const { data: cronogramData, error: cronogramError } = await supabase
         .from('cronograma_obras')
         .select('*')
-        .eq('obra_id', obra.id)
+        .eq('obra_id', obraId)
         .order('ordem_execucao');
 
       if (cronogramError) throw cronogramError;
@@ -97,18 +97,18 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
       const { data: selecionadasData, error: selecionadasError } = await supabase
         .from('obra_etapas_selecionadas')
         .select('*')
-        .eq('obra_id', obra.id)
+        .eq('obra_id', obraId)
         .eq('ativo', true);
 
       if (selecionadasError) throw selecionadasError;
 
-      setCronogramas(cronogramData || []);
+      setLocalCronogramas(cronogramData || []);
       setTemplates(templateData || []);
       setEtapasSelecionadas(selecionadasData || []);
       
       // Se não há cronograma, definir data de início como a data da obra
-      if (!cronogramData?.length && obra.data_inicio) {
-        setDataInicio(new Date(obra.data_inicio));
+      if (!cronogramData?.length && dataInicioObra) {
+        setDataInicio(new Date(dataInicioObra));
       }
     } catch (error: any) {
       toast({
@@ -130,7 +130,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
   };
 
   const gerarCronogramaDosTemplates = async () => {
-    if (!obra || !user || !dataInicio || selectedTemplates.length === 0) {
+    if (!obraId || !user || !dataInicio || selectedTemplates.length === 0) {
       toast({
         title: "Erro",
         description: "Selecione pelo menos uma etapa e defina a data de início",
@@ -143,7 +143,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
     try {
       // Primeiro, salvar etapas selecionadas
       const etapasParaSalvar = selectedTemplates.map(templateId => ({
-        obra_id: obra.id,
+        obra_id: obraId,
         template_etapa_id: templateId,
         ativo: true
       }));
@@ -170,7 +170,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
         dataFim.setDate(dataFim.getDate() + template.duracao_estimada_dias);
 
         cronogramasParaCriar.push({
-          obra_id: obra.id,
+          obra_id: obraId,
           etapa: template.nome,
           descricao: template.descricao,
           data_inicio_prevista: dataAtual.toISOString().split('T')[0],
@@ -199,7 +199,6 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
       setSelectedTemplates([]);
       setDataInicio(undefined);
       loadData();
-      onUpdate?.();
     } catch (error: any) {
       toast({
         title: "Erro ao gerar cronograma",
@@ -212,7 +211,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
   };
 
   const adicionarEtapaCustomizada = async () => {
-    if (!obra || !user || !newEtapaForm.etapa || !newEtapaForm.data_inicio_prevista || !newEtapaForm.data_fim_prevista) {
+    if (!obraId || !user || !newEtapaForm.etapa || !newEtapaForm.data_inicio_prevista || !newEtapaForm.data_fim_prevista) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -224,7 +223,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
     setSaving(true);
     try {
       const novaEtapa = {
-        obra_id: obra.id,
+        obra_id: obraId,
         etapa: newEtapaForm.etapa,
         descricao: newEtapaForm.descricao,
         data_inicio_prevista: newEtapaForm.data_inicio_prevista.toISOString().split('T')[0],
@@ -250,11 +249,10 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
         descricao: '',
         data_inicio_prevista: undefined,
         data_fim_prevista: undefined,
-        ordem_execucao: cronogramas.length + 1
+        ordem_execucao: localCronogramas.length + 1
       });
 
       loadData();
-      onUpdate?.();
     } catch (error: any) {
       toast({
         title: "Erro ao adicionar etapa",
@@ -270,7 +268,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
     try {
       const updateData: any = { status: novoStatus };
       
-      if (novoStatus === 'em_andamento' && !cronogramas.find(c => c.id === etapaId)?.data_inicio_real) {
+      if (novoStatus === 'em_andamento' && !localCronogramas.find(c => c.id === etapaId)?.data_inicio_real) {
         updateData.data_inicio_real = new Date().toISOString().split('T')[0];
       }
       
@@ -291,7 +289,6 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
       });
 
       loadData();
-      onUpdate?.();
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar status",
@@ -316,7 +313,6 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
       });
 
       loadData();
-      onUpdate?.();
     } catch (error: any) {
       toast({
         title: "Erro ao remover etapa",
@@ -355,13 +351,11 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
     return statusMap[status] || status;
   };
 
-  if (!obra) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Cronograma - {obra.nome}</DialogTitle>
+          <DialogTitle>Cronograma - {obraNome}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="cronograma" className="w-full">
@@ -374,7 +368,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
           <TabsContent value="cronograma" className="space-y-4">
             {loading ? (
               <div className="text-center py-8">Carregando cronograma...</div>
-            ) : cronogramas.length === 0 ? (
+            ) : localCronogramas.length === 0 ? (
               <div className="text-center py-8">
                 <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">Nenhuma etapa no cronograma</p>
@@ -384,7 +378,7 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
               </div>
             ) : (
               <div className="space-y-4">
-                {cronogramas.map((etapa) => (
+                {localCronogramas.map((etapa) => (
                   <Card key={etapa.id}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
