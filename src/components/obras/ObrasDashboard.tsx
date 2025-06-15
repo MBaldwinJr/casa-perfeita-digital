@@ -6,7 +6,6 @@ import { Calendar, DollarSign, TrendingUp, AlertTriangle, CheckCircle, Clock } f
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { format, addDays, eachDayOfInterval, isWithinInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale/pt-BR';
 
 type Obra = Tables<'obras'>;
 type CronogramaObra = Tables<'cronograma_obras'>;
@@ -46,7 +45,7 @@ export function ObrasDashboard({ obras, cronogramas }: ObrasDashboardProps) {
     
     return dates.slice(0, 50).map(date => {
       const dayData: any = {
-        date: format(date, 'dd/MM', { locale: ptBR }),
+        date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
         fullDate: date
       };
       
@@ -306,10 +305,10 @@ export function ObrasDashboard({ obras, cronogramas }: ObrasDashboardProps) {
                   <div key={cronograma.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <h4 className="font-medium">{cronograma.etapa}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(cronograma.data_inicio_prevista), 'dd/MM/yyyy', { locale: ptBR })} - {' '}
-                        {format(new Date(cronograma.data_fim_prevista), 'dd/MM/yyyy', { locale: ptBR })}
-                      </p>
+                       <p className="text-sm text-muted-foreground">
+                         {new Date(cronograma.data_inicio_prevista).toLocaleDateString('pt-BR')} - {' '}
+                         {new Date(cronograma.data_fim_prevista).toLocaleDateString('pt-BR')}
+                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge 
