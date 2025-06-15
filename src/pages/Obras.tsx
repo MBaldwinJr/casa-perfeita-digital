@@ -12,13 +12,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Hammer, Calendar, Camera, FileText, AlertTriangle, CheckCircle, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useObras, useCreateObra, useCronogramasObra, useLicencasObra, useFotosObra } from "@/hooks/useSupabaseQuery";
+import { ObraDetailsModal } from "@/components/obras/ObraDetailsModal";
+import { CronogramaModal } from "@/components/obras/CronogramaModal";
+import { FotosModal } from "@/components/obras/FotosModal";
+import { Tables } from "@/integrations/supabase/types";
+
+type Obra = Tables<'obras'>;
 
 export default function Obras() {
   const { toast } = useToast();
   const { data: obras = [], isLoading } = useObras();
   
   const [showNovaObraDialog, setShowNovaObraDialog] = useState(false);
-  const [selectedObraId, setSelectedObraId] = useState('');
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showCronogramaModal, setShowCronogramaModal] = useState(false);
+  const [showFotosModal, setShowFotosModal] = useState(false);
+  const [selectedObra, setSelectedObra] = useState<Obra | null>(null);
   const [formData, setFormData] = useState({
     nome: '',
     endereco: '',
@@ -34,14 +43,35 @@ export default function Obras() {
 
   const createObra = useCreateObra();
 
-  // Usar a primeira obra como exemplo para cronograma/licenças
+  // Dados da obra selecionada para os modais
+  const selectedObraId = selectedObra?.id || '';
+  const { data: cronogramas = [] } = useCronogramasObra(selectedObraId);
+  const { data: licencas = [] } = useLicencasObra(selectedObraId);
+  const { data: fotos = [] } = useFotosObra(selectedObraId);
+
+  // Usar a primeira obra como exemplo para estatísticas gerais
   const primeiraObra = obras[0]?.id || '';
-  const { data: cronogramas = [] } = useCronogramasObra(primeiraObra);
-  const { data: licencas = [] } = useLicencasObra(primeiraObra);
-  const { data: fotos = [] } = useFotosObra(primeiraObra);
+  const { data: cronogramasGerais = [] } = useCronogramasObra(primeiraObra);
+  const { data: licencasGerais = [] } = useLicencasObra(primeiraObra);
+  const { data: fotosGerais = [] } = useFotosObra(primeiraObra);
 
   const handleNovaObra = () => {
     setShowNovaObraDialog(true);
+  };
+
+  const handleViewDetails = (obra: Obra) => {
+    setSelectedObra(obra);
+    setShowDetailsModal(true);
+  };
+
+  const handleOpenCronograma = (obra: Obra) => {
+    setSelectedObra(obra);
+    setShowCronogramaModal(true);
+  };
+
+  const handleOpenFotos = (obra: Obra) => {
+    setSelectedObra(obra);
+    setShowFotosModal(true);
   };
 
   const handleCriarObra = async () => {
@@ -123,7 +153,7 @@ export default function Obras() {
     if (!obra.data_previsao_fim) return true;
     return new Date(obra.data_previsao_fim) > new Date();
   });
-  const totalFotos = fotos.length;
+  const totalFotos = fotosGerais.length;
 
   if (isLoading) {
     return (
@@ -180,7 +210,7 @@ export default function Obras() {
           <CardContent>
             <div className="text-2xl font-bold">{totalFotos}</div>
             <p className="text-xs text-muted-foreground">
-              {fotos.filter(f => {
+              {fotosGerais.filter(f => {
                 const dataFoto = new Date(f.data_foto);
                 const semanaPassada = new Date();
                 semanaPassada.setDate(semanaPassada.getDate() - 7);
@@ -236,19 +266,19 @@ export default function Obras() {
                     <Progress value={obra.progresso_percentual} className="h-2" />
                   </div>
                   
-                  <div className="flex justify-between items-center mt-3">
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Cronograma
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Camera className="h-4 w-4 mr-1" />
-                        Fotos ({obra.id === primeiraObra ? fotos.length : 0})
-                      </Button>
-                    </div>
-                    <Button size="sm">Ver Detalhes</Button>
-                  </div>
+                   <div className="flex justify-between items-center mt-3">
+                     <div className="flex space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => handleOpenCronograma(obra as any)}>
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Cronograma
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleOpenFotos(obra as any)}>
+                          <Camera className="h-4 w-4 mr-1" />
+                          Fotos
+                        </Button>
+                      </div>
+                      <Button size="sm" onClick={() => handleViewDetails(obra as any)}>Ver Detalhes</Button>
+                   </div>
                 </div>
               ))}
             </div>
@@ -257,60 +287,67 @@ export default function Obras() {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              Cronograma {obras[0] ? `- ${obras[0].nome}` : ''}
-            </CardTitle>
-            <CardDescription>Acompanhamento das etapas da obra</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {cronogramas.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Nenhuma etapa cadastrada</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {cronogramas.map((etapa) => (
-                  <div key={etapa.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{etapa.etapa}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Previsto: {new Date(etapa.data_inicio_prevista).toLocaleDateString('pt-BR')} - {new Date(etapa.data_fim_prevista).toLocaleDateString('pt-BR')}
-                      </p>
-                      {etapa.data_inicio_real && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Cronograma {obras[0] ? `- ${obras[0].nome}` : ''}
+              </CardTitle>
+              <CardDescription>Acompanhamento das etapas da obra</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {cronogramasGerais.length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Nenhuma etapa cadastrada</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {cronogramasGerais.slice(0, 3).map((etapa) => (
+                    <div key={etapa.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{etapa.etapa}</p>
                         <p className="text-sm text-muted-foreground">
-                          Realizado: {new Date(etapa.data_inicio_real).toLocaleDateString('pt-BR')}
-                          {etapa.data_fim_real && ` - ${new Date(etapa.data_fim_real).toLocaleDateString('pt-BR')}`}
+                          Previsto: {new Date(etapa.data_inicio_prevista).toLocaleDateString('pt-BR')} - {new Date(etapa.data_fim_prevista).toLocaleDateString('pt-BR')}
                         </p>
-                      )}
+                        {etapa.data_inicio_real && (
+                          <p className="text-sm text-muted-foreground">
+                            Realizado: {new Date(etapa.data_inicio_real).toLocaleDateString('pt-BR')}
+                            {etapa.data_fim_real && ` - ${new Date(etapa.data_fim_real).toLocaleDateString('pt-BR')}`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {etapa.status === 'concluida' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                        {etapa.status === 'em_andamento' && <AlertTriangle className="h-4 w-4 text-blue-500" />}
+                        {etapa.status === 'atrasada' && <AlertTriangle className="h-4 w-4 text-red-500" />}
+                        <Badge 
+                          variant="outline" 
+                          className={
+                            etapa.status === 'concluida' ? 'text-green-600 border-green-600' :
+                            etapa.status === 'em_andamento' ? 'text-blue-600 border-blue-600' :
+                            etapa.status === 'atrasada' ? 'text-red-600 border-red-600' :
+                            'text-gray-600 border-gray-600'
+                          }
+                        >
+                          {etapa.status === 'concluida' ? 'Concluída' :
+                           etapa.status === 'em_andamento' ? 'Em Andamento' :
+                           etapa.status === 'atrasada' ? 'Atrasada' : 'Pendente'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      {etapa.status === 'concluida' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                      {etapa.status === 'em_andamento' && <AlertTriangle className="h-4 w-4 text-blue-500" />}
-                      {etapa.status === 'atrasada' && <AlertTriangle className="h-4 w-4 text-red-500" />}
-                      <Badge 
-                        variant="outline" 
-                        className={
-                          etapa.status === 'concluida' ? 'text-green-600 border-green-600' :
-                          etapa.status === 'em_andamento' ? 'text-blue-600 border-blue-600' :
-                          etapa.status === 'atrasada' ? 'text-red-600 border-red-600' :
-                          'text-gray-600 border-gray-600'
-                        }
-                      >
-                        {etapa.status === 'concluida' ? 'Concluída' :
-                         etapa.status === 'em_andamento' ? 'Em Andamento' :
-                         etapa.status === 'atrasada' ? 'Atrasada' : 'Pendente'}
-                      </Badge>
+                  ))}
+                  {cronogramasGerais.length > 3 && (
+                    <div className="text-center pt-2">
+                       <Button variant="outline" size="sm" onClick={() => obras[0] && handleOpenCronograma(obras[0] as any)}>
+                         Ver todas as etapas ({cronogramasGerais.length})
+                       </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
         <Card>
           <CardHeader>
@@ -320,48 +357,55 @@ export default function Obras() {
             </CardTitle>
             <CardDescription>Status das licenças de construção</CardDescription>
           </CardHeader>
-          <CardContent>
-            {licencas.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Nenhuma licença cadastrada</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {licencas.map((licenca) => (
-                  <div key={licenca.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{licenca.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {licenca.data_vencimento 
-                          ? `Vencimento: ${new Date(licenca.data_vencimento).toLocaleDateString('pt-BR')}`
-                          : 'Aguardando emissão'
+            <CardContent>
+              {licencasGerais.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Nenhuma licença cadastrada</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {licencasGerais.slice(0, 3).map((licenca) => (
+                    <div key={licenca.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{licenca.nome}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {licenca.data_vencimento 
+                            ? `Vencimento: ${new Date(licenca.data_vencimento).toLocaleDateString('pt-BR')}`
+                            : 'Aguardando emissão'
+                          }
+                        </p>
+                        {licenca.orgao_emissor && (
+                          <p className="text-sm text-muted-foreground">Órgão: {licenca.orgao_emissor}</p>
+                        )}
+                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={
+                          licenca.status === 'aprovada' ? 'text-green-600 border-green-600' :
+                          licenca.status === 'vencida' ? 'text-red-600 border-red-600' :
+                          licenca.status === 'negada' ? 'text-red-600 border-red-600' :
+                          licenca.status === 'renovacao' ? 'text-yellow-600 border-yellow-600' :
+                          'text-gray-600 border-gray-600'
                         }
-                      </p>
-                      {licenca.orgao_emissor && (
-                        <p className="text-sm text-muted-foreground">Órgão: {licenca.orgao_emissor}</p>
-                      )}
+                      >
+                        {licenca.status === 'aprovada' ? 'Válida' :
+                         licenca.status === 'vencida' ? 'Vencida' :
+                         licenca.status === 'negada' ? 'Negada' :
+                         licenca.status === 'renovacao' ? 'Renovação' : 'Pendente'}
+                      </Badge>
                     </div>
-                    <Badge 
-                      variant="outline" 
-                      className={
-                        licenca.status === 'aprovada' ? 'text-green-600 border-green-600' :
-                        licenca.status === 'vencida' ? 'text-red-600 border-red-600' :
-                        licenca.status === 'negada' ? 'text-red-600 border-red-600' :
-                        licenca.status === 'renovacao' ? 'text-yellow-600 border-yellow-600' :
-                        'text-gray-600 border-gray-600'
-                      }
-                    >
-                      {licenca.status === 'aprovada' ? 'Válida' :
-                       licenca.status === 'vencida' ? 'Vencida' :
-                       licenca.status === 'negada' ? 'Negada' :
-                       licenca.status === 'renovacao' ? 'Renovação' : 'Pendente'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
+                  ))}
+                  {licencasGerais.length > 3 && (
+                    <div className="text-center pt-2">
+                      <Button variant="outline" size="sm">
+                        Ver todas as licenças ({licencasGerais.length})
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
         </Card>
       </div>
 
@@ -482,8 +526,40 @@ export default function Obras() {
               </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+          </DialogContent>
+        </Dialog>
+
+        {/* Modais Detalhados */}
+        <ObraDetailsModal
+          obra={selectedObra}
+          cronogramas={cronogramas as any}
+          licencas={licencas as any}
+          fotos={fotos as any}
+          open={showDetailsModal}
+          onOpenChange={setShowDetailsModal}
+          onOpenCronograma={() => {
+            setShowDetailsModal(false);
+            setShowCronogramaModal(true);
+          }}
+          onOpenFotos={() => {
+            setShowDetailsModal(false);
+            setShowFotosModal(true);
+          }}
+        />
+
+        <CronogramaModal
+          obraId={selectedObraId}
+          cronogramas={cronogramas as any}
+          open={showCronogramaModal}
+          onOpenChange={setShowCronogramaModal}
+        />
+
+        <FotosModal
+          obraId={selectedObraId}
+          fotos={fotos as any}
+          open={showFotosModal}
+          onOpenChange={setShowFotosModal}
+        />
+      </div>
+    );
+  }
