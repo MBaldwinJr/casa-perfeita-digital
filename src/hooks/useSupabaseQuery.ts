@@ -998,6 +998,171 @@ export const useCreateFotoObra = () => {
   });
 };
 
+// Hooks para etapas templates
+export const useTemplateEtapas = () => {
+  return useQuery({
+    queryKey: ['template-etapas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('template_etapas_obras')
+        .select('*')
+        .eq('ativo', true)
+        .order('ordem_execucao', { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useObraEtapasSelecionadas = (obraId: string) => {
+  return useQuery({
+    queryKey: ['obra-etapas-selecionadas', obraId],
+    queryFn: async () => {
+      if (!obraId) return [];
+      
+      const { data, error } = await supabase
+        .from('obra_etapas_selecionadas')
+        .select(`
+          *,
+          template_etapas_obras(*)
+        `)
+        .eq('obra_id', obraId)
+        .order('ordem_personalizada', { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!obraId,
+  });
+};
+
+export const useToggleEtapaObra = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ obraId, templateEtapaId, ativo, ordemPersonalizada }: {
+      obraId: string;
+      templateEtapaId: string;
+      ativo: boolean;
+      ordemPersonalizada?: number;
+    }) => {
+      if (ativo) {
+        // Adicionar etapa
+        const { data, error } = await supabase
+          .from('obra_etapas_selecionadas')
+          .upsert({
+            obra_id: obraId,
+            template_etapa_id: templateEtapaId,
+            ativo: true,
+            ordem_personalizada: ordemPersonalizada
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      } else {
+        // Remover etapa
+        const { error } = await supabase
+          .from('obra_etapas_selecionadas')
+          .delete()
+          .eq('obra_id', obraId)
+          .eq('template_etapa_id', templateEtapaId);
+
+        if (error) throw error;
+        return null;
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['obra-etapas-selecionadas', variables.obraId] });
+      toast({
+        title: "Etapa atualizada!",
+        description: "As etapas da obra foram atualizadas com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar etapa",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+export const useGerarCronogramaTemplate = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ obraId, dataInicio }: {
+      obraId: string;
+      dataInicio: string;
+    }) => {
+      // Buscar etapas selecionadas
+      const { data: etapasSelecionadas, error: etapasError } = await supabase
+        .from('obra_etapas_selecionadas')
+        .select(`
+          *,
+          template_etapas_obras(*)
+        `)
+        .eq('obra_id', obraId)
+        .eq('ativo', true)
+        .order('ordem_personalizada', { ascending: true });
+
+      if (etapasError) throw etapasError;
+
+      const cronogramas = [];
+      let dataAtual = new Date(dataInicio);
+
+      for (const etapa of etapasSelecionadas) {
+        const template = etapa.template_etapas_obras;
+        const duracaoDias = etapa.duracao_personalizada_dias || template.duracao_estimada_dias;
+        
+        const dataFim = new Date(dataAtual);
+        dataFim.setDate(dataFim.getDate() + duracaoDias - 1);
+
+        cronogramas.push({
+          obra_id: obraId,
+          etapa: template.nome,
+          descricao: template.descricao,
+          data_inicio_prevista: dataAtual.toISOString().split('T')[0],
+          data_fim_prevista: dataFim.toISOString().split('T')[0],
+          ordem_execucao: etapa.ordem_personalizada || template.ordem_execucao,
+          status: 'pendente'
+        });
+
+        // Próxima etapa começa no dia seguinte
+        dataAtual = new Date(dataFim);
+        dataAtual.setDate(dataAtual.getDate() + 1);
+      }
+
+      // Inserir cronogramas
+      const { data, error } = await supabase
+        .from('cronograma_obras')
+        .insert(cronogramas)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['cronogramas', variables.obraId] });
+      toast({
+        title: "Cronograma gerado!",
+        description: "Cronograma foi criado com base nas etapas selecionadas.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao gerar cronograma",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 // Hooks para templates de etapas
 export const useTemplateEtapas = () => {
   return useQuery({
