@@ -23,19 +23,27 @@ import {
   Plus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  useDocumentosJuridicos, 
+  useClientes, 
+  useImoveis, 
+  useCreateDocumento,
+  DocumentoJuridico 
+} from "@/hooks/useSupabaseQuery";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface Document {
-  id: string;
+interface UploadFormData {
   nome: string;
   tipo: string;
-  status: 'valido' | 'vencido' | 'pendente' | 'analise';
-  vencimento: string;
-  processo: string;
-  cliente: string;
-  responsavel: string;
-  dataUpload: string;
+  categoria: string;
+  cliente_id?: string;
+  imovel_id?: string;
+  data_vencimento?: string;
+  orgao_emissor?: string;
+  numero_documento?: string;
   observacoes?: string;
-  arquivo?: string;
 }
 
 interface DocumentTemplate {
@@ -50,64 +58,38 @@ interface DocumentTemplate {
 
 export default function DocumentManager() {
   const { toast } = useToast();
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const { user } = useAuth();
+  const { uploadFile, uploading } = useFileUpload();
+  
+  // Hooks para dados
+  const { data: documentos = [], isLoading } = useDocumentosJuridicos();
+  const { data: clientes = [] } = useClientes();
+  const { data: imoveis = [] } = useImoveis();
+  const createDocumento = useCreateDocumento();
+  
+  // Estados locais
+  const [selectedDocument, setSelectedDocument] = useState<DocumentoJuridico | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadFormData, setUploadFormData] = useState<UploadFormData>({
+    nome: '',
+    tipo: '',
+    categoria: '',
+    cliente_id: '',
+    imovel_id: '',
+    data_vencimento: '',
+    orgao_emissor: '',
+    numero_documento: '',
+    observacoes: ''
+  });
+  
   const [filtros, setFiltros] = useState({
     status: 'todos',
     tipo: 'todos',
     busca: ''
   });
 
-  const documentos: Document[] = [
-    {
-      id: '1',
-      nome: 'Certidão de Ônus Reais',
-      tipo: 'Certidão',
-      status: 'valido',
-      vencimento: '15/03/2025',
-      processo: 'PROC-001',
-      cliente: 'João Silva',
-      responsavel: 'Dr. Carlos',
-      dataUpload: '10/01/2024',
-      observacoes: 'Documento verificado e aprovado'
-    },
-    {
-      id: '2',
-      nome: 'Certidão de Distribuição',
-      tipo: 'Certidão',
-      status: 'vencido',
-      vencimento: '10/01/2024',
-      processo: 'PROC-002',
-      cliente: 'Maria Santos',
-      responsavel: 'Dra. Ana',
-      dataUpload: '05/01/2024',
-      observacoes: 'Necessário renovação urgente'
-    },
-    {
-      id: '3',
-      nome: 'Escritura de Compra e Venda',
-      tipo: 'Contrato',
-      status: 'analise',
-      vencimento: '-',
-      processo: 'PROC-003',
-      cliente: 'Pedro Costa',
-      responsavel: 'Dr. Roberto',
-      dataUpload: '20/01/2024'
-    },
-    {
-      id: '4',
-      nome: 'IPTU 2024',
-      tipo: 'Tributário',
-      status: 'pendente',
-      vencimento: '31/12/2024',
-      processo: 'PROC-001',
-      cliente: 'João Silva',
-      responsavel: 'Dr. Carlos',
-      dataUpload: '15/01/2024',
-      observacoes: 'Aguardando pagamento'
-    }
-  ];
 
   const templates: DocumentTemplate[] = [
     {
@@ -157,40 +139,58 @@ export default function DocumentManager() {
     }
   ];
 
-  const getStatusColor = (status: Document['status']) => {
+  // Verificar se o documento está vencido
+  const isDocumentExpired = (documento: DocumentoJuridico) => {
+    if (!documento.data_vencimento) return false;
+    return new Date(documento.data_vencimento) < new Date();
+  };
+
+  // Atualizar status automático baseado na data de vencimento
+  const getActualStatus = (documento: DocumentoJuridico) => {
+    if (isDocumentExpired(documento)) {
+      return 'vencido';
+    }
+    return documento.status;
+  };
+
+  const getStatusColor = (status: DocumentoJuridico['status']) => {
     switch (status) {
       case 'valido': return 'bg-green-500';
       case 'vencido': return 'bg-red-500';
       case 'pendente': return 'bg-yellow-500';
-      case 'analise': return 'bg-blue-500';
+      case 'invalido': return 'bg-gray-500';
       default: return 'bg-gray-500';
     }
   };
 
-  const getStatusLabel = (status: Document['status']) => {
+  const getStatusLabel = (status: DocumentoJuridico['status']) => {
     switch (status) {
       case 'valido': return 'Válido';
       case 'vencido': return 'Vencido';
       case 'pendente': return 'Pendente';
-      case 'analise': return 'Em Análise';
+      case 'invalido': return 'Inválido';
       default: return status;
     }
   };
 
-  const getStatusIcon = (status: Document['status']) => {
+  const getStatusIcon = (status: DocumentoJuridico['status']) => {
     switch (status) {
       case 'valido': return <CheckCircle className="h-4 w-4" />;
       case 'vencido': return <AlertTriangle className="h-4 w-4" />;
       case 'pendente': return <Clock className="h-4 w-4" />;
-      case 'analise': return <FileCheck className="h-4 w-4" />;
+      case 'invalido': return <FileText className="h-4 w-4" />;
       default: return <FileText className="h-4 w-4" />;
     }
   };
 
   const documentosFiltrados = documentos.filter(doc => {
+    const actualStatus = getActualStatus(doc);
+    const cliente = doc.clientes?.nome || '';
+    
     const matchBusca = doc.nome.toLowerCase().includes(filtros.busca.toLowerCase()) ||
-                      doc.cliente.toLowerCase().includes(filtros.busca.toLowerCase());
-    const matchStatus = filtros.status === 'todos' || doc.status === filtros.status;
+                      cliente.toLowerCase().includes(filtros.busca.toLowerCase()) ||
+                      doc.tipo.toLowerCase().includes(filtros.busca.toLowerCase());
+    const matchStatus = filtros.status === 'todos' || actualStatus === filtros.status;
     const matchTipo = filtros.tipo === 'todos' || doc.tipo === filtros.tipo;
     
     return matchBusca && matchStatus && matchTipo;
@@ -198,18 +198,66 @@ export default function DocumentManager() {
 
   const estatisticas = {
     total: documentos.length,
-    validos: documentos.filter(d => d.status === 'valido').length,
-    vencidos: documentos.filter(d => d.status === 'vencido').length,
-    pendentes: documentos.filter(d => d.status === 'pendente').length,
-    analise: documentos.filter(d => d.status === 'analise').length
+    validos: documentos.filter(d => getActualStatus(d) === 'valido').length,
+    vencidos: documentos.filter(d => getActualStatus(d) === 'vencido').length,
+    pendentes: documentos.filter(d => getActualStatus(d) === 'pendente').length,
+    invalidos: documentos.filter(d => getActualStatus(d) === 'invalido').length
   };
 
-  const handleUploadDocument = () => {
-    toast({
-      title: "Upload Realizado",
-      description: "Documento enviado para análise com sucesso.",
-    });
-    setShowUploadDialog(false);
+  const handleUploadDocument = async () => {
+    if (!selectedFile || !user) return;
+
+    if (!uploadFormData.nome || !uploadFormData.tipo || !uploadFormData.categoria) {
+      toast({
+        title: "Erro",
+        description: "Preencha os campos obrigatórios: Nome, Tipo e Categoria.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Upload do arquivo
+      const uploadResult = await uploadFile(selectedFile, 'documentos');
+      if (!uploadResult) return;
+
+      // Salvar dados no banco usando o hook
+      await createDocumento.mutateAsync({
+        nome: uploadFormData.nome,
+        tipo: uploadFormData.tipo,
+        categoria: uploadFormData.categoria,
+        cliente_id: uploadFormData.cliente_id || null,
+        imovel_id: uploadFormData.imovel_id || null,
+        data_vencimento: uploadFormData.data_vencimento || null,
+        orgao_emissor: uploadFormData.orgao_emissor || null,
+        numero_documento: uploadFormData.numero_documento || null,
+        observacoes: uploadFormData.observacoes || null,
+        arquivo_url: uploadResult.url,
+        status: 'pendente'
+      });
+
+      // Limpar formulário
+      setShowUploadDialog(false);
+      setSelectedFile(null);
+      setUploadFormData({
+        nome: '',
+        tipo: '',
+        categoria: '',
+        cliente_id: '',
+        imovel_id: '',
+        data_vencimento: '',
+        orgao_emissor: '',
+        numero_documento: '',
+        observacoes: ''
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Erro ao cadastrar documento",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGerarTemplate = (template: DocumentTemplate) => {
@@ -283,11 +331,11 @@ export default function DocumentManager() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Em Análise</CardTitle>
+            <CardTitle className="text-sm font-medium">Inválidos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{estatisticas.analise}</div>
-            <p className="text-xs text-muted-foreground">processando</p>
+            <div className="text-2xl font-bold text-gray-600">{estatisticas.invalidos}</div>
+            <p className="text-xs text-muted-foreground">rejeitados</p>
           </CardContent>
         </Card>
       </div>
@@ -327,7 +375,7 @@ export default function DocumentManager() {
                   <SelectItem value="valido">Válido</SelectItem>
                   <SelectItem value="vencido">Vencido</SelectItem>
                   <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="analise">Em Análise</SelectItem>
+                  <SelectItem value="invalido">Inválido</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -343,6 +391,8 @@ export default function DocumentManager() {
                   <SelectItem value="Certidão">Certidão</SelectItem>
                   <SelectItem value="Contrato">Contrato</SelectItem>
                   <SelectItem value="Tributário">Tributário</SelectItem>
+                  <SelectItem value="Documento Pessoal">Documento Pessoal</SelectItem>
+                  <SelectItem value="Registro">Registro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -367,65 +417,94 @@ export default function DocumentManager() {
           <CardDescription>Lista de todos os documentos cadastrados</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {documentosFiltrados.map((documento) => (
-              <div key={documento.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-start space-x-3">
-                    <div className="mt-1">
-                      {getStatusIcon(documento.status)}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : documentosFiltrados.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Nenhum documento encontrado</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {documentosFiltrados.map((documento) => {
+                const actualStatus = getActualStatus(documento);
+                const cliente = documento.clientes?.nome || 'N/A';
+                
+                return (
+                  <div key={documento.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-start space-x-3">
+                        <div className="mt-1">
+                          {getStatusIcon(actualStatus)}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{documento.nome}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Cliente: {cliente} • Categoria: {documento.categoria}
+                          </p>
+                          {documento.orgao_emissor && (
+                            <p className="text-xs text-muted-foreground">
+                              Órgão Emissor: {documento.orgao_emissor}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={`${getStatusColor(actualStatus)} text-white`}>
+                          {getStatusLabel(actualStatus)}
+                        </Badge>
+                        <Badge variant="outline">
+                          {documento.tipo}
+                        </Badge>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold">{documento.nome}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {documento.cliente} • {documento.processo}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Responsável: {documento.responsavel}
-                      </p>
+
+                    <div className="grid gap-2 md:grid-cols-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Criado em:</span>
+                        <span className="ml-1">
+                          {new Date(documento.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Vencimento:</span>
+                        <span className={`ml-1 ${actualStatus === 'vencido' ? 'text-red-600 font-medium' : ''}`}>
+                          {documento.data_vencimento 
+                            ? new Date(documento.data_vencimento).toLocaleDateString('pt-BR')
+                            : 'N/A'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => setSelectedDocument(documento)}>
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver
+                        </Button>
+                        {documento.arquivo_url && (
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(documento.arquivo_url, '_blank')}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Download
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className={`${getStatusColor(documento.status)} text-white`}>
-                      {getStatusLabel(documento.status)}
-                    </Badge>
-                    <Badge variant="outline">
-                      {documento.tipo}
-                    </Badge>
-                  </div>
-                </div>
 
-                <div className="grid gap-2 md:grid-cols-3 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Upload:</span>
-                    <span className="ml-1">{documento.dataUpload}</span>
+                    {documento.observacoes && (
+                      <div className="mt-3 p-2 bg-muted rounded text-sm">
+                        <span className="font-medium">Observações:</span> {documento.observacoes}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Vencimento:</span>
-                    <span className={`ml-1 ${documento.status === 'vencido' ? 'text-red-600 font-medium' : ''}`}>
-                      {documento.vencimento || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => setSelectedDocument(documento)}>
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-
-                {documento.observacoes && (
-                  <div className="mt-3 p-2 bg-muted rounded text-sm">
-                    <span className="font-medium">Observações:</span> {documento.observacoes}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -447,31 +526,54 @@ export default function DocumentManager() {
                   <p className="text-sm text-muted-foreground">{selectedDocument.tipo}</p>
                 </div>
                 <div>
+                  <Label className="font-semibold">Categoria</Label>
+                  <p className="text-sm text-muted-foreground">{selectedDocument.categoria}</p>
+                </div>
+                <div>
                   <Label className="font-semibold">Status</Label>
-                  <Badge className={`${getStatusColor(selectedDocument.status)} text-white`}>
-                    {getStatusLabel(selectedDocument.status)}
+                  <Badge className={`${getStatusColor(getActualStatus(selectedDocument))} text-white`}>
+                    {getStatusLabel(getActualStatus(selectedDocument))}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="font-semibold">Processo</Label>
-                  <p className="text-sm text-muted-foreground">{selectedDocument.processo}</p>
-                </div>
-                <div>
                   <Label className="font-semibold">Cliente</Label>
-                  <p className="text-sm text-muted-foreground">{selectedDocument.cliente}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedDocument.clientes?.nome || 'N/A'}
+                  </p>
                 </div>
                 <div>
-                  <Label className="font-semibold">Responsável</Label>
-                  <p className="text-sm text-muted-foreground">{selectedDocument.responsavel}</p>
+                  <Label className="font-semibold">Imóvel</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedDocument.imoveis?.titulo || 'N/A'}
+                  </p>
                 </div>
                 <div>
-                  <Label className="font-semibold">Data de Upload</Label>
-                  <p className="text-sm text-muted-foreground">{selectedDocument.dataUpload}</p>
+                  <Label className="font-semibold">Data de Criação</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(selectedDocument.created_at).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
                 <div>
                   <Label className="font-semibold">Vencimento</Label>
-                  <p className="text-sm text-muted-foreground">{selectedDocument.vencimento}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedDocument.data_vencimento 
+                      ? new Date(selectedDocument.data_vencimento).toLocaleDateString('pt-BR')
+                      : 'N/A'
+                    }
+                  </p>
                 </div>
+                {selectedDocument.orgao_emissor && (
+                  <div>
+                    <Label className="font-semibold">Órgão Emissor</Label>
+                    <p className="text-sm text-muted-foreground">{selectedDocument.orgao_emissor}</p>
+                  </div>
+                )}
+                {selectedDocument.numero_documento && (
+                  <div>
+                    <Label className="font-semibold">Número do Documento</Label>
+                    <p className="text-sm text-muted-foreground">{selectedDocument.numero_documento}</p>
+                  </div>
+                )}
               </div>
               {selectedDocument.observacoes && (
                 <div>
@@ -493,60 +595,152 @@ export default function DocumentManager() {
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <Label htmlFor="nomeDoc">Nome do Documento</Label>
-                <Input id="nomeDoc" placeholder="Ex: Certidão de Ônus Reais" />
+                <Label htmlFor="nomeDoc">Nome do Documento *</Label>
+                <Input 
+                  id="nomeDoc" 
+                  placeholder="Ex: Certidão de Ônus Reais"
+                  value={uploadFormData.nome}
+                  onChange={(e) => setUploadFormData(prev => ({ ...prev, nome: e.target.value }))}
+                />
               </div>
               <div>
-                <Label htmlFor="tipoDoc">Tipo</Label>
-                <Select>
+                <Label htmlFor="tipoDoc">Tipo *</Label>
+                <Select value={uploadFormData.tipo} onValueChange={(value) => setUploadFormData(prev => ({ ...prev, tipo: value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="certidao">Certidão</SelectItem>
-                    <SelectItem value="contrato">Contrato</SelectItem>
-                    <SelectItem value="tributario">Tributário</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
+                    <SelectItem value="Certidão">Certidão</SelectItem>
+                    <SelectItem value="Contrato">Contrato</SelectItem>
+                    <SelectItem value="Tributário">Tributário</SelectItem>
+                    <SelectItem value="Documento Pessoal">Documento Pessoal</SelectItem>
+                    <SelectItem value="Registro">Registro</SelectItem>
+                    <SelectItem value="Outros">Outros</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="processo">Processo</Label>
-                <Select>
+                <Label htmlFor="categoria">Categoria *</Label>
+                <Select value={uploadFormData.categoria} onValueChange={(value) => setUploadFormData(prev => ({ ...prev, categoria: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o processo" />
+                    <SelectValue placeholder="Selecione a categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="proc-001">PROC-001</SelectItem>
-                    <SelectItem value="proc-002">PROC-002</SelectItem>
-                    <SelectItem value="proc-003">PROC-003</SelectItem>
+                    <SelectItem value="Imóvel">Imóvel</SelectItem>
+                    <SelectItem value="Pessoal">Pessoal</SelectItem>
+                    <SelectItem value="Empresarial">Empresarial</SelectItem>
+                    <SelectItem value="Fiscal">Fiscal</SelectItem>
+                    <SelectItem value="Judicial">Judicial</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="vencimento">Vencimento</Label>
-                <Input id="vencimento" type="date" />
+                <Label htmlFor="cliente">Cliente</Label>
+                <Select value={uploadFormData.cliente_id} onValueChange={(value) => setUploadFormData(prev => ({ ...prev, cliente_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        {cliente.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="imovel">Imóvel</Label>
+                <Select value={uploadFormData.imovel_id} onValueChange={(value) => setUploadFormData(prev => ({ ...prev, imovel_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o imóvel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imoveis.map((imovel) => (
+                      <SelectItem key={imovel.id} value={imovel.id}>
+                        {imovel.titulo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="vencimento">Data de Vencimento</Label>
+                <Input 
+                  id="vencimento" 
+                  type="date"
+                  value={uploadFormData.data_vencimento}
+                  onChange={(e) => setUploadFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="orgao">Órgão Emissor</Label>
+                <Input 
+                  id="orgao" 
+                  placeholder="Ex: Cartório de Registro de Imóveis"
+                  value={uploadFormData.orgao_emissor}
+                  onChange={(e) => setUploadFormData(prev => ({ ...prev, orgao_emissor: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="numero">Número do Documento</Label>
+                <Input 
+                  id="numero" 
+                  placeholder="Ex: 123456/2024"
+                  value={uploadFormData.numero_documento}
+                  onChange={(e) => setUploadFormData(prev => ({ ...prev, numero_documento: e.target.value }))}
+                />
               </div>
             </div>
+            
             <div>
-              <Label htmlFor="arquivo">Arquivo</Label>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Clique para selecionar ou arraste o arquivo aqui
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  PDF, DOC, DOCX até 10MB
-                </p>
+              <Label htmlFor="arquivo">Arquivo *</Label>
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      if (!uploadFormData.nome) {
+                        setUploadFormData(prev => ({ 
+                          ...prev, 
+                          nome: file.name.split('.')[0] 
+                        }));
+                      }
+                    }
+                  }}
+                />
+                {selectedFile && (
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                    <FileText className="h-4 w-4" />
+                    <span className="text-sm">{selectedFile.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({(selectedFile.size / 1024 / 1024).toFixed(2)}MB)
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
+            
             <div>
               <Label htmlFor="observacoes">Observações</Label>
-              <Input id="observacoes" placeholder="Observações sobre o documento..." />
+              <Input 
+                id="observacoes" 
+                placeholder="Observações sobre o documento..."
+                value={uploadFormData.observacoes}
+                onChange={(e) => setUploadFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+              />
             </div>
+            
             <div className="flex space-x-2">
-              <Button onClick={handleUploadDocument} className="flex-1">
-                Fazer Upload
+              <Button 
+                onClick={handleUploadDocument} 
+                className="flex-1"
+                disabled={uploading || !selectedFile}
+              >
+                {uploading ? "Enviando..." : "Fazer Upload"}
               </Button>
               <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
                 Cancelar

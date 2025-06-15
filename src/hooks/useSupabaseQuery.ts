@@ -536,6 +536,40 @@ export const useCreateProcesso = () => {
   });
 };
 
+export const useCreateDocumento = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (documento: Omit<DocumentoJuridico, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'clientes' | 'imoveis'>) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('documentos_juridicos')
+        .insert([{ ...documento, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documentos'] });
+      toast({
+        title: "Documento criado!",
+        description: "Documento foi criado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar documento",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 export const useUpdateAlertaStatus = () => {
   const queryClient = useQueryClient();
 
