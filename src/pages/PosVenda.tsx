@@ -65,6 +65,17 @@ export default function PosVenda() {
     cliente_telefone: ''
   });
 
+  const [agendamentoForm, setAgendamentoForm] = useState({
+    cliente_id: '',
+    imovel_id: '',
+    tipo: '',
+    data_agendamento: '',
+    horario: '',
+    responsavel: '',
+    endereco: '',
+    observacoes: ''
+  });
+
   // Queries
   const { data: atendimentos = [], isLoading: loadingAtendimentos } = useAtendimentosPosVenda();
   const { data: agendamentos = [], isLoading: loadingAgendamentos } = useAgendamentosPosVenda();
@@ -103,6 +114,22 @@ export default function PosVenda() {
     }).length
   };
 
+  // Estatísticas dos relatórios
+  const relatorioStats = {
+    totalAtendimentos: atendimentos.length,
+    atendimentosResolvidos: atendimentos.filter(a => a.status === 'resolvido').length,
+    taxaResolucao: atendimentos.length > 0 
+      ? Math.round((atendimentos.filter(a => a.status === 'resolvido').length / atendimentos.length) * 100)
+      : 0,
+    mediaSatisfacao: pesquisasSatisfacao.length > 0 
+      ? Number((pesquisasSatisfacao.reduce((acc, p) => acc + p.nota, 0) / pesquisasSatisfacao.length).toFixed(1))
+      : 0,
+    visitasTecnicas: agendamentos.length,
+    percentualSatisfacao: pesquisasSatisfacao.length > 0 
+      ? Math.round((pesquisasSatisfacao.reduce((acc, p) => acc + p.nota, 0) / pesquisasSatisfacao.length / 5) * 100)
+      : 0
+  };
+
   const handleNovoAtendimento = async () => {
     if (!novoAtendimentoForm.assunto) {
       toast({
@@ -136,6 +163,72 @@ export default function PosVenda() {
       cliente_telefone: ''
     });
     setShowNovoAtendimento(false);
+  };
+
+  const handleAgendamento = async () => {
+    if (!agendamentoForm.tipo || !agendamentoForm.data_agendamento || !agendamentoForm.horario) {
+      toast({
+        title: "Erro",
+        description: "Preencha os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await createAgendamento.mutateAsync({
+      cliente_id: agendamentoForm.cliente_id || null,
+      imovel_id: agendamentoForm.imovel_id || null,
+      tipo: agendamentoForm.tipo,
+      data_agendamento: agendamentoForm.data_agendamento,
+      horario: agendamentoForm.horario,
+      responsavel: agendamentoForm.responsavel,
+      endereco: agendamentoForm.endereco,
+      observacoes: agendamentoForm.observacoes,
+      status: 'agendado'
+    });
+
+    setAgendamentoForm({
+      cliente_id: '',
+      imovel_id: '',
+      tipo: '',
+      data_agendamento: '',
+      horario: '',
+      responsavel: '',
+      endereco: '',
+      observacoes: ''
+    });
+    setShowAgendamento(false);
+  };
+
+  const handleLigar = (telefone?: string) => {
+    if (telefone) {
+      window.open(`tel:${telefone}`, '_self');
+    } else {
+      toast({
+        title: "Telefone não disponível",
+        description: "Não há telefone cadastrado para este cliente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEmail = (email?: string) => {
+    if (email) {
+      window.open(`mailto:${email}`, '_self');
+    } else {
+      toast({
+        title: "Email não disponível",
+        description: "Não há email cadastrado para este cliente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleResponder = (protocolo: string) => {
+    toast({
+      title: "Resposta",
+      description: `Funcionalidade de resposta para o protocolo ${protocolo} será implementada.`,
+    });
   };
 
   const atendimentosFiltrados = atendimentos.filter(atendimento => {
@@ -344,15 +437,26 @@ export default function PosVenda() {
                             </span>
                           </div>
                           <div className="flex space-x-2">
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleLigar(atendimento.cliente_telefone || atendimento.clientes?.telefone)}
+                            >
                               <Phone className="h-4 w-4 mr-1" />
                               Ligar
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleEmail(atendimento.cliente_email || atendimento.clientes?.email)}
+                            >
                               <Mail className="h-4 w-4 mr-1" />
                               Email
                             </Button>
-                            <Button size="sm">
+                            <Button 
+                              size="sm"
+                              onClick={() => handleResponder(atendimento.protocolo)}
+                            >
                               <MessageSquare className="h-4 w-4 mr-1" />
                               Responder
                             </Button>
@@ -572,9 +676,9 @@ export default function PosVenda() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Taxa de Resolução</span>
-                    <span className="font-bold">85%</span>
+                    <span className="font-bold">{relatorioStats.taxaResolucao}%</span>
                   </div>
-                  <Progress value={85} className="h-2" />
+                  <Progress value={relatorioStats.taxaResolucao} className="h-2" />
                 </div>
                 
                 <div className="space-y-2">
@@ -588,9 +692,9 @@ export default function PosVenda() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Satisfação do Cliente</span>
-                    <span className="font-bold">96%</span>
+                    <span className="font-bold">{relatorioStats.percentualSatisfacao}%</span>
                   </div>
-                  <Progress value={96} className="h-2" />
+                  <Progress value={relatorioStats.percentualSatisfacao} className="h-2" />
                 </div>
               </CardContent>
             </Card>
@@ -606,19 +710,19 @@ export default function PosVenda() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span>Total de Atendimentos</span>
-                    <span className="text-2xl font-bold">156</span>
+                    <span className="text-2xl font-bold">{loadingAtendimentos ? '...' : relatorioStats.totalAtendimentos}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Atendimentos Resolvidos</span>
-                    <span className="text-2xl font-bold text-green-600">132</span>
+                    <span className="text-2xl font-bold text-green-600">{loadingAtendimentos ? '...' : relatorioStats.atendimentosResolvidos}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Média de Satisfação</span>
-                    <span className="text-2xl font-bold text-blue-600">4.8</span>
+                    <span className="text-2xl font-bold text-blue-600">{loadingPesquisas ? '...' : relatorioStats.mediaSatisfacao}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Visitas Técnicas</span>
-                    <span className="text-2xl font-bold">34</span>
+                    <span className="text-2xl font-bold">{loadingAgendamentos ? '...' : relatorioStats.visitasTecnicas}</span>
                   </div>
                 </div>
               </CardContent>
@@ -740,6 +844,120 @@ export default function PosVenda() {
                 Criar Atendimento
               </Button>
               <Button variant="outline" onClick={() => setShowNovoAtendimento(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Agendar Visita */}
+      <Dialog open={showAgendamento} onOpenChange={setShowAgendamento}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Agendar Visita</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="cliente_agendamento">Cliente</Label>
+                <Select value={agendamentoForm.cliente_id} onValueChange={(value) => setAgendamentoForm(prev => ({ ...prev, cliente_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>
+                        {cliente.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="imovel_agendamento">Imóvel</Label>
+                <Select value={agendamentoForm.imovel_id} onValueChange={(value) => setAgendamentoForm(prev => ({ ...prev, imovel_id: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um imóvel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {imoveis.map((imovel) => (
+                      <SelectItem key={imovel.id} value={imovel.id}>
+                        {imovel.titulo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="tipo_agendamento">Tipo de Visita *</Label>
+                <Select value={agendamentoForm.tipo} onValueChange={(value) => setAgendamentoForm(prev => ({ ...prev, tipo: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="vistoria">Vistoria</SelectItem>
+                    <SelectItem value="manutencao">Manutenção</SelectItem>
+                    <SelectItem value="reparo">Reparo</SelectItem>
+                    <SelectItem value="entrega">Entrega</SelectItem>
+                    <SelectItem value="garantia">Garantia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="responsavel_agendamento">Responsável</Label>
+                <Input
+                  id="responsavel_agendamento"
+                  value={agendamentoForm.responsavel}
+                  onChange={(e) => setAgendamentoForm(prev => ({ ...prev, responsavel: e.target.value }))}
+                  placeholder="Nome do responsável"
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="data_agendamento">Data *</Label>
+                <Input
+                  id="data_agendamento"
+                  type="date"
+                  value={agendamentoForm.data_agendamento}
+                  onChange={(e) => setAgendamentoForm(prev => ({ ...prev, data_agendamento: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="horario_agendamento">Horário *</Label>
+                <Input
+                  id="horario_agendamento"
+                  type="time"
+                  value={agendamentoForm.horario}
+                  onChange={(e) => setAgendamentoForm(prev => ({ ...prev, horario: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="endereco_agendamento">Endereço</Label>
+              <Input
+                id="endereco_agendamento"
+                value={agendamentoForm.endereco}
+                onChange={(e) => setAgendamentoForm(prev => ({ ...prev, endereco: e.target.value }))}
+                placeholder="Endereço da visita (se diferente do imóvel)"
+              />
+            </div>
+            <div>
+              <Label htmlFor="observacoes_agendamento">Observações</Label>
+              <Textarea
+                id="observacoes_agendamento"
+                value={agendamentoForm.observacoes}
+                onChange={(e) => setAgendamentoForm(prev => ({ ...prev, observacoes: e.target.value }))}
+                placeholder="Observações adicionais sobre a visita..."
+                rows={3}
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={handleAgendamento} className="flex-1">
+                Agendar Visita
+              </Button>
+              <Button variant="outline" onClick={() => setShowAgendamento(false)}>
                 Cancelar
               </Button>
             </div>
