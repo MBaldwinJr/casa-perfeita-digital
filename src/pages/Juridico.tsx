@@ -93,17 +93,17 @@ export default function Juridico() {
   const filteredAnalises = analises.filter(analise => {
     if (filters.busca && !analise.tipo.toLowerCase().includes(filters.busca.toLowerCase()) && 
         !analise.responsavel.toLowerCase().includes(filters.busca.toLowerCase())) return false;
-    if (filters.status && analise.status !== filters.status) return false;
-    if (filters.tipo && analise.tipo !== filters.tipo) return false;
-    if (filters.prioridade && analise.prioridade !== filters.prioridade) return false;
-    if (filters.responsavel && analise.responsavel !== filters.responsavel) return false;
+    if (filters.status && filters.status !== 'all' && analise.status !== filters.status) return false;
+    if (filters.tipo && filters.tipo !== 'all' && analise.tipo !== filters.tipo) return false;
+    if (filters.prioridade && filters.prioridade !== 'all' && analise.prioridade !== filters.prioridade) return false;
+    if (filters.responsavel && filters.responsavel !== 'all' && analise.responsavel !== filters.responsavel) return false;
     return true;
   });
 
   const filteredProcessos = processos.filter(processo => {
     if (filters.busca && !processo.tipo.toLowerCase().includes(filters.busca.toLowerCase()) &&
         !processo.advogado_responsavel.toLowerCase().includes(filters.busca.toLowerCase())) return false;
-    if (filters.status && processo.status !== filters.status) return false;
+    if (filters.status && filters.status !== 'all' && processo.status !== filters.status) return false;
     return true;
   });
 

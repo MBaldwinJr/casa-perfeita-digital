@@ -25,7 +25,7 @@ export default function JuridicoFilters({ filters, onFiltersChange, onClearFilte
     onFiltersChange({ ...filters, [key]: value });
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== '');
+  const hasActiveFilters = Object.values(filters).some(value => value !== '' && value !== 'all');
 
   return (
     <Card>
@@ -66,7 +66,7 @@ export default function JuridicoFilters({ filters, onFiltersChange, onClearFilte
                 <SelectValue placeholder="Todos os status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
                 <SelectItem value="concluida">Concluída</SelectItem>
@@ -83,7 +83,7 @@ export default function JuridicoFilters({ filters, onFiltersChange, onClearFilte
                 <SelectValue placeholder="Todos os tipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="documentos">Análise de Documentos</SelectItem>
                 <SelectItem value="viabilidade">Viabilidade Jurídica</SelectItem>
                 <SelectItem value="riscos">Análise de Riscos</SelectItem>
@@ -99,7 +99,7 @@ export default function JuridicoFilters({ filters, onFiltersChange, onClearFilte
                 <SelectValue placeholder="Todas as prioridades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="all">Todas</SelectItem>
                 <SelectItem value="baixa">Baixa</SelectItem>
                 <SelectItem value="media">Média</SelectItem>
                 <SelectItem value="alta">Alta</SelectItem>
@@ -115,7 +115,7 @@ export default function JuridicoFilters({ filters, onFiltersChange, onClearFilte
                 <SelectValue placeholder="Todos os responsáveis" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="Dr. Carlos Santos">Dr. Carlos Santos</SelectItem>
                 <SelectItem value="Dra. Ana Costa">Dra. Ana Costa</SelectItem>
                 <SelectItem value="Dr. Roberto Lima">Dr. Roberto Lima</SelectItem>
