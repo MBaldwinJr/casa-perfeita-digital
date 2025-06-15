@@ -13,7 +13,7 @@ import {
   useTemplateEtapas, 
   useObraEtapasSelecionadas, 
   useToggleEtapaObra,
-  useGerarCronogramaTemplate 
+  useGerarCronogramaAutomatico 
 } from "@/hooks/useSupabaseQuery";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,7 +40,7 @@ export function EtapasTemplateModal({
   const { data: templates = [] } = useTemplateEtapas();
   const { data: etapasSelecionadas = [] } = useObraEtapasSelecionadas(obraId);
   const toggleEtapa = useToggleEtapaObra();
-  const gerarCronograma = useGerarCronogramaTemplate();
+  const gerarCronograma = useGerarCronogramaAutomatico();
 
   const etapasAtivasIds = new Set(etapasSelecionadas.map(e => e.template_etapa_id));
 
@@ -49,7 +49,8 @@ export function EtapasTemplateModal({
       obraId,
       templateEtapaId: template.id,
       ativo,
-      ordemPersonalizada: template.ordem_execucao
+      ordemPersonalizada: template.ordem_execucao,
+      duracaoPersonalizada: template.duracao_estimada_dias
     });
   };
 

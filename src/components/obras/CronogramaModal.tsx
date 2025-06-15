@@ -116,10 +116,6 @@ export function CronogramaModal({ obraId, obraNome, dataInicioObra, cronogramas,
               <Plus className="h-4 w-4 mr-2" />
               Nova Etapa
             </Button>
-            <Button onClick={() => setShowTemplateModal(true)} size="sm">
-              <Calendar className="h-4 w-4 mr-2" />
-              Usar Templates
-            </Button>
             </div>
           </DialogTitle>
         </DialogHeader>
