@@ -502,6 +502,40 @@ export const useCreateAnalise = () => {
   });
 };
 
+export const useCreateProcesso = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (processo: Omit<ProcessoJuridico, 'id' | 'created_at' | 'updated_at' | 'user_id' | 'clientes' | 'imoveis'>) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('processos_juridicos')
+        .insert([{ ...processo, user_id: user.id }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['processos'] });
+      toast({
+        title: "Processo criado!",
+        description: "Processo jurídico foi criado com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao criar processo",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
 export const useUpdateAlertaStatus = () => {
   const queryClient = useQueryClient();
 
