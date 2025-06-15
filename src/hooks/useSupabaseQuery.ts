@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 // Types
 export interface Cliente {
@@ -1369,18 +1369,20 @@ export const useAtendimentosPosVenda = () => {
 export const useCreateAtendimentoPosVenda = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (novoAtendimento: Partial<AtendimentoPosVenda>) => {
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Remove properties that shouldn't be inserted
+      const { clientes, imoveis, ...insertData } = novoAtendimento;
+      
       const { data, error } = await supabase
         .from('atendimentos_pos_venda')
         .insert({
-          ...novoAtendimento,
+          ...insertData,
           user_id: user.id,
-        })
+        } as any)
         .select()
         .single();
 
@@ -1432,18 +1434,20 @@ export const useAgendamentosPosVenda = () => {
 export const useCreateAgendamentoPosVenda = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (novoAgendamento: Partial<AgendamentoPosVenda>) => {
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Remove properties that shouldn't be inserted
+      const { clientes, imoveis, ...insertData } = novoAgendamento;
+      
       const { data, error } = await supabase
         .from('agendamentos_pos_venda')
         .insert({
-          ...novoAgendamento,
+          ...insertData,
           user_id: user.id,
-        })
+        } as any)
         .select()
         .single();
 
@@ -1495,18 +1499,20 @@ export const useGarantiasImoveis = () => {
 export const useCreateGarantiaImovel = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (novaGarantia: Partial<GarantiaImovel>) => {
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Remove properties that shouldn't be inserted
+      const { clientes, imoveis, ...insertData } = novaGarantia;
+      
       const { data, error } = await supabase
         .from('garantias_imoveis')
         .insert({
-          ...novaGarantia,
+          ...insertData,
           user_id: user.id,
-        })
+        } as any)
         .select()
         .single();
 
@@ -1558,18 +1564,20 @@ export const usePesquisasSatisfacao = () => {
 export const useCreatePesquisaSatisfacao = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (novaPesquisa: Partial<PesquisaSatisfacao>) => {
       if (!user) throw new Error('Usuário não autenticado');
 
+      // Remove properties that shouldn't be inserted
+      const { clientes, imoveis, ...insertData } = novaPesquisa;
+      
       const { data, error } = await supabase
         .from('pesquisas_satisfacao')
         .insert({
-          ...novaPesquisa,
+          ...insertData,
           user_id: user.id,
-        })
+        } as any)
         .select()
         .single();
 
