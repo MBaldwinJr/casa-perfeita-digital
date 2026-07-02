@@ -53,12 +53,8 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-0 py-4">
-        <div className="px-4 mb-3">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
-            Fichário
-          </span>
-        </div>
+      <SidebarContent className="px-0 py-0">
+
 
         {/* Filing-cabinet tabs */}
         <nav className="relative flex flex-col">
