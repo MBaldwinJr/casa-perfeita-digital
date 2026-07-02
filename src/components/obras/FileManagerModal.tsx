@@ -128,12 +128,7 @@ export function FileManagerModal({ obra, open, onOpenChange }: FileManagerModalP
 
       if (uploadError) throw uploadError;
 
-      // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('obras-arquivos')
-        .getPublicUrl(filePath);
-
-      // Salvar metadados no banco
+      // Salvar metadados no banco (armazena o path; URL assinada é gerada sob demanda)
       const { error: dbError } = await supabase
         .from('arquivos_obras')
         .insert({
@@ -144,7 +139,7 @@ export function FileManagerModal({ obra, open, onOpenChange }: FileManagerModalP
           categoria: uploadCategory,
           tipo_arquivo: selectedFile.type,
           tamanho_bytes: selectedFile.size,
-          url_storage: publicUrl,
+          url_storage: filePath,
           descricao: uploadDescription || null,
           tags: uploadTags ? uploadTags.split(',').map(tag => tag.trim()) : null,
           publico: false,
