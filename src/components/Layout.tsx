@@ -57,7 +57,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto px-2 sm:px-2 md:px-3 py-3 sm:py-4 bg-gradient-to-b from-background to-muted/30">
+        <main className="flex-1 overflow-auto px-0 py-3 sm:py-4 bg-gradient-to-b from-background to-muted/30">
           {children}
         </main>
       </SidebarInset>
