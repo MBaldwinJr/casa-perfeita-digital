@@ -35,27 +35,29 @@ export function Layout({ children }: LayoutProps) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-3 sm:px-4">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border/60 bg-background/80 backdrop-blur-md px-3 sm:px-6">
           <div className="flex items-center gap-2 min-w-0">
             <SidebarTrigger className="md:hidden" />
-            <h1 className="text-base sm:text-xl font-semibold truncate">Sistema Imobiliário</h1>
+            <h1 className="text-base sm:text-lg font-display font-semibold tracking-tight truncate">
+              Sistema Imobiliário
+            </h1>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <NotificationCenter />
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold shrink-0">
+            <div className="flex items-center gap-2 pl-2 sm:pl-3 sm:border-l border-border/60">
+              <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-sm shrink-0 shadow-soft">
                 {user?.email?.charAt(0).toUpperCase()}
               </div>
               <span className="text-sm text-muted-foreground hidden lg:block max-w-[200px] truncate">
                 {user?.email}
               </span>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} aria-label="Sair">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 bg-gradient-to-b from-background to-muted/30">
           {children}
         </main>
       </SidebarInset>
