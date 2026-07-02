@@ -189,7 +189,7 @@ export default function Juridico() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold">Módulo Jurídico</h2>
           <p className="text-muted-foreground">Gestão completa de processos e documentos jurídicos</p>
@@ -210,7 +210,7 @@ export default function Juridico() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="processos">Processos</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>

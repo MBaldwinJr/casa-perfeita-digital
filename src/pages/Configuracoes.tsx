@@ -50,7 +50,7 @@ export default function Configuracoes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold">Configurações do Sistema</h2>
           <p className="text-muted-foreground">Gerencie as configurações e integrações</p>
@@ -62,7 +62,7 @@ export default function Configuracoes() {
       </div>
 
       <Tabs defaultValue="geral" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 h-auto">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="notificacoes">Notificações</TabsTrigger>

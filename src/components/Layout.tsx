@@ -1,5 +1,5 @@
 
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { Button } from "@/components/ui/button";
@@ -35,15 +35,18 @@ export function Layout({ children }: LayoutProps) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between border-b px-4">
-          <h1 className="text-xl font-semibold">Sistema Imobiliário</h1>
-          <div className="flex items-center space-x-4">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-3 sm:px-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <SidebarTrigger className="md:hidden" />
+            <h1 className="text-base sm:text-xl font-semibold truncate">Sistema Imobiliário</h1>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <NotificationCenter />
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold shrink-0">
                 {user?.email?.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm text-muted-foreground hidden md:block">
+              <span className="text-sm text-muted-foreground hidden lg:block max-w-[200px] truncate">
                 {user?.email}
               </span>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
@@ -52,7 +55,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           {children}
         </main>
       </SidebarInset>

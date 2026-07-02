@@ -225,7 +225,7 @@ export default function FinancingComparison() {
       </div>
 
       <Tabs defaultValue="comparacao" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
           <TabsTrigger value="comparacao">Comparação</TabsTrigger>
           <TabsTrigger value="simulador">Simulador</TabsTrigger>
           <TabsTrigger value="mercado">Mercado</TabsTrigger>

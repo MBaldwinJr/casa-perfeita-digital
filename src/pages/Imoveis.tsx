@@ -43,7 +43,7 @@ export default function Imoveis() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold">Gestão de Imóveis</h2>
           <p className="text-muted-foreground">Cadastre e gerencie seu portfólio de imóveis</p>

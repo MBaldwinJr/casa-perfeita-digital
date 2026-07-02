@@ -374,7 +374,7 @@ export default function PosVenda() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold">Pós-venda</h2>
           <p className="text-muted-foreground">Suporte ao cliente e acompanhamento pós-entrega</p>
@@ -448,7 +448,7 @@ export default function PosVenda() {
 
       {/* Tabs de Conteúdo */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto">
           <TabsTrigger value="atendimentos">Atendimentos</TabsTrigger>
           <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>
           <TabsTrigger value="garantias">Garantias</TabsTrigger>

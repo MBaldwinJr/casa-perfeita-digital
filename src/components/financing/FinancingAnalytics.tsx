@@ -150,7 +150,7 @@ export default function FinancingAnalytics() {
       </div>
 
       <Tabs defaultValue="conversao" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
           <TabsTrigger value="conversao">Conversão</TabsTrigger>
           <TabsTrigger value="bancos">Por Banco</TabsTrigger>
           <TabsTrigger value="tendencias">Tendências</TabsTrigger>

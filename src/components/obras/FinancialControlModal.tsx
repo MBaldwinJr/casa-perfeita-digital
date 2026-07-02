@@ -290,7 +290,7 @@ export function FinancialControlModal({ obra, cronogramas, open, onOpenChange }:
           </div>
 
           <Tabs defaultValue="gastos" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
               <TabsTrigger value="gastos">Gastos</TabsTrigger>
               <TabsTrigger value="etapas">Por Etapa</TabsTrigger>
               <TabsTrigger value="categorias">Por Categoria</TabsTrigger>

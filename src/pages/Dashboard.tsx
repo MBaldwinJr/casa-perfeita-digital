@@ -18,7 +18,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-3xl font-bold">Dashboard</h2>
           <p className="text-muted-foreground">Visão geral do seu negócio imobiliário</p>
