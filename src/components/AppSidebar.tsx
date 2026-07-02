@@ -70,8 +70,8 @@ export function AppSidebar() {
                 key={item.url}
                 to={item.url}
                 className={cn(
-                  "group relative flex items-center gap-3 pl-5 pr-3 py-2.5 ml-3 mr-0",
-                  "rounded-l-lg border-y border-l transition-all duration-200",
+                  "group relative flex items-center gap-3 pl-5 pr-3 py-2.5",
+                  "border-y border-l transition-all duration-200",
                   "text-sm font-medium",
                   active
                     ? "bg-background text-foreground border-sidebar-border shadow-[inset_0_1px_0_hsl(var(--border)),-4px_0_12px_-6px_rgba(0,0,0,0.25)] z-10 -mr-px translate-x-0"
