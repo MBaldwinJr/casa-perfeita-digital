@@ -183,7 +183,7 @@ export function ObrasDashboard({ obras, cronogramas }: ObrasDashboardProps) {
 
       {/* Charts Tabs */}
       <Tabs defaultValue="custos" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
           <TabsTrigger value="custos">Custos</TabsTrigger>
           <TabsTrigger value="progresso">Progresso</TabsTrigger>
           <TabsTrigger value="cronograma">Cronograma</TabsTrigger>

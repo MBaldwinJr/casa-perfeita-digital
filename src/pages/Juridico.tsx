@@ -210,7 +210,7 @@ export default function Juridico() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 h-auto">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="processos">Processos</TabsTrigger>
           <TabsTrigger value="documentos">Documentos</TabsTrigger>
