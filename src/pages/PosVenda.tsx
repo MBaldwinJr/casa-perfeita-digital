@@ -374,7 +374,7 @@ export default function PosVenda() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold">Pós-venda</h2>
           <p className="text-muted-foreground">Suporte ao cliente e acompanhamento pós-entrega</p>
