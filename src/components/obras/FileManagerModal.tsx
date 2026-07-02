@@ -37,7 +37,7 @@ interface FileData {
   url_storage: string;
   descricao?: string;
   tags?: string[];
-  versao: number;
+  versao?: number;
   publico: boolean;
   status: string;
   data_upload: string;
