@@ -292,7 +292,7 @@ export function FileManagerModal({ obra, open, onOpenChange }: FileManagerModalP
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Badge variant="outline">{file.categoria}</Badge>
                               <span>{formatFileSize(file.tamanho_bytes)}</span>
-                              <span>v{file.versao}</span>
+                              <span>v{file.versao ?? 1}</span>
                               <span>{new Date(file.data_upload).toLocaleDateString('pt-BR')}</span>
                             </div>
                             {file.descricao && (
