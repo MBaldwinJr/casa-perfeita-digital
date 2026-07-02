@@ -81,10 +81,15 @@ const menuItems = [
 export function AppSidebar() {
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <Building2 className="h-8 w-8 text-primary" />
-          <span className="text-lg font-bold">ImobiGest</span>
+      <SidebarHeader className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 rounded-lg gradient-accent flex items-center justify-center shadow-soft">
+            <Building2 className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-base font-display font-bold tracking-tight text-sidebar-foreground">ImobiGest</span>
+            <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/60">Premium</span>
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
